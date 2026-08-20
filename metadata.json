@@ -1,0 +1,8 @@
+{
+  "name": "Remix Remix Remix The Witch Who Carried the Sun",
+  "description": "A cozy, emotional fantasy visual novel about sharing light, connection, and learning not to carry the world\u0027s burdens alone.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
