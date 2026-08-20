@@ -140,7 +140,10 @@ export type SoundEffectType =
   | 'flower_bloom'
   | 'sun_sparkle'
   | 'memory_chime'
-  | 'vivienne_cry';
+  | 'vivienne_cry'
+  | 'harp_swell'
+  | 'clown_note'
+  | 'lantern_glow';
 
 export type MusicTheme =
   | 'title'

@@ -13,6 +13,7 @@ import { AchievementBanner } from './components/AchievementBanner';
 import { CreditsRoll } from './components/CreditsRoll';
 import { LightMeter } from './components/LightMeter';
 import { WeatherOverlay } from './components/WeatherOverlay';
+import { MagicTrail } from './components/MagicTrail';
 import { AmbientFireflies } from './components/AmbientFireflies';
 import { AutoSaveToast } from './components/AutoSaveToast';
 import { BirthdayLockScreen } from './components/BirthdayLockScreen';
@@ -249,29 +250,15 @@ export default function App() {
       audioSynth.playSoundEffect(currentScene.sfx);
     }
 
-    // Trigger chapter title card if chapter start (skip prologue_1 because it has its own cinematic sequence, and skip epilogue_screen)
-    if (
-      currentScene?.isChapterStart &&
-      currentScene?.chapterTitle &&
-      prologuePhase === 'none' &&
-      currentScene.id !== 'prologue_1' &&
-      currentScene.id !== 'epilogue_screen' &&
-      !inTitleScreen &&
-      !isShowingStorybookOpening &&
-      !isShowingStorybookEnding &&
-      !isShowingCredits &&
-      !isEnding &&
-      !isMemoriesOpen
-    ) {
+    // Trigger chapter title card if chapter start (skip prologue_1 because it has its own cinematic sequence)
+    if (currentScene?.isChapterStart && currentScene?.chapterTitle && prologuePhase === 'none' && currentScene.id !== 'prologue_1') {
       setShowChapterCard(true);
       const timer = window.setTimeout(() => {
         setShowChapterCard(false);
       }, 2600);
       return () => window.clearTimeout(timer);
-    } else {
-      setShowChapterCard(false);
     }
-  }, [currentSceneId, inTitleScreen, isShowingStorybookOpening, isShowingStorybookEnding, isShowingCredits, isEnding, isMemoriesOpen, currentScene, prologuePhase]);
+  }, [currentSceneId, inTitleScreen, isShowingStorybookOpening, currentScene, prologuePhase]);
 
   // Log dialogue history & auto-save with toast notification
   useEffect(() => {
@@ -662,13 +649,7 @@ export default function App() {
     'epilogue_19',
     'epilogue_20',
     'epilogue_21',
-  ].includes(currentSceneId) ||
-  currentScene.expression === 'grateful' ||
-  currentScene.expression === 'inspired' ||
-  currentScene.expression === 'comforting' ||
-  currentScene.expression === 'happy' ||
-  currentScene.speaker === 'orik' ||
-  (currentScene.speaker === 'artisan' && currentScene.expression !== 'weary');
+  ].includes(currentSceneId) || currentScene.expression === 'grateful' || currentScene.expression === 'inspired' || currentScene.expression === 'comforting';
 
   // Super Witch choice action animation state
   const [showWandChoiceBurst, setShowWandChoiceBurst] = useState(false);
@@ -743,7 +724,7 @@ export default function App() {
           <div className="absolute inset-0 z-12 pointer-events-none transition-all duration-1000 bg-[radial-gradient(circle_at_center,rgba(251,191,36,0.18)_0%,rgba(245,158,11,0.08)_50%,transparent_80%)] animate-warm-glow-pulse" />
         )}
 
-        {/* Dynamic Weather-Based Screen Overlay System (Dust Motes, Rain Ripples, Sunlight Glints, Wind Leaves, Stardust, Floating Light Motes & Heartwarming Hearts) */}
+        {/* Dynamic Weather-Based Screen Overlay System (Dust Motes, Rain Ripples, Sunlight Glints, Wind Leaves, Stardust & Floating Light Motes) */}
         {!inTitleScreen && !isShowingStorybookOpening && !isShowingStorybookEnding && (
           <WeatherOverlay
             weather={currentScene.weather}
@@ -752,6 +733,11 @@ export default function App() {
             collectedLightsCount={collectedLights.length}
             isHeartwarming={isHeartwarmingScene}
           />
+        )}
+
+        {/* Ethereal Golden Magic Wand Cursor Trail System */}
+        {!isShowingStorybookOpening && !isShowingStorybookEnding && (
+          <MagicTrail enabled={true} />
         )}
 
         {/* Ambient Firefly Overlay for Forest and Evening Scenes */}
@@ -844,7 +830,7 @@ export default function App() {
         )}
 
         {/* Chapter Title Transition Banner Card for Mid-Game Chapters */}
-        {showChapterCard && currentScene.chapterTitle && prologuePhase === 'none' && !isMemoriesOpen && !inTitleScreen && !isEnding && currentSceneId !== 'epilogue_screen' && (
+        {showChapterCard && currentScene.chapterTitle && prologuePhase === 'none' && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-none animate-fade-in">
             <div className="text-center p-8 border-y border-amber-500/40 bg-slate-950/80 w-full max-w-2xl">
               <h3 className="text-amber-400 font-serif text-sm sm:text-base tracking-[0.3em] uppercase mb-2">
@@ -863,11 +849,7 @@ export default function App() {
             onStartGame={handleStartGame}
             onContinueGame={hasSaveData ? handleContinueGame : undefined}
             onShowCredits={() => setIsShowingCredits(true)}
-            onOpenMemories={() => {
-              setShowChapterCard(false);
-              setProloguePhase('none');
-              setIsMemoriesOpen(true);
-            }}
+            onOpenMemories={() => setIsMemoriesOpen(true)}
             playCount={playCount}
             hasSaveData={hasSaveData}
             language={language}
@@ -889,12 +871,9 @@ export default function App() {
             isMuted={isMuted}
             onToggleAudio={handleToggleAudio}
             onViewMemories={() => {
-              setShowChapterCard(false);
-              setProloguePhase('none');
               setIsShowingCredits(false);
               setIsShowingStorybookEnding(false);
               setCurrentSceneId('epilogue_screen');
-              setIsMemoriesOpen(true);
             }}
             onRestart={() => {
               setIsShowingCredits(false);
@@ -943,11 +922,7 @@ export default function App() {
               language={language}
               onRestart={handleRestart}
               onReturnToTitle={handleReturnToTitle}
-              onOpenMemories={() => {
-                setShowChapterCard(false);
-                setProloguePhase('none');
-                setIsMemoriesOpen(true);
-              }}
+              onOpenMemories={() => setIsMemoriesOpen(true)}
               playCount={playCount}
             />
           </div>
@@ -1032,6 +1007,7 @@ export default function App() {
                 <DialogueBox
                   speaker={currentScene.speaker}
                   speakerName={currentScene.speakerName}
+                  expression={currentScene.expression}
                   text={currentScene.text}
                   language={language}
                   onAdvance={advanceScene}

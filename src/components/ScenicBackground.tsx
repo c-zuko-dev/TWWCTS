@@ -26,7 +26,7 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
   const [activeBounceFood, setActiveBounceFood] = useState<string | null>(null);
   const [mouseParallax, setMouseParallax] = useState({ x: 0, y: 0 });
 
-  // Mouse Parallax movement loop
+  // Mouse Parallax movement loop and dynamic coordinate-based ambient sound trigger zones
   useEffect(() => {
     let reqId: number;
     let targetX = 0;
@@ -39,6 +39,54 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
       const cy = window.innerHeight / 2;
       targetX = ((e.clientX - cx) / cx) * 14;
       targetY = ((e.clientY - cy) / cy) * 9;
+
+      // Coordinate zone detection for ambient spatial sound effects
+      const relX = e.clientX / window.innerWidth;
+      const relY = e.clientY / window.innerHeight;
+
+      if (location === 'whispering_forest') {
+        if (relY > 0.45 && (relX < 0.35 || relX > 0.65)) {
+          // Pine tree clusters & forest undergrowth
+          audioSynth.playHoverAmbience('leaves');
+        } else if (relY < 0.3) {
+          // Starlit night breeze
+          audioSynth.playHoverAmbience('wind');
+        }
+      } else if (location === 'sea_shore_sunrise' || location === 'sea_shore_dusk') {
+        if (relY > 0.55) {
+          // Ocean shoreline waves
+          audioSynth.playHoverAmbience('waves');
+        } else if (relY < 0.35) {
+          // Luminous dawn sparkles
+          audioSynth.playHoverAmbience('chime');
+        }
+      } else if (location === 'bottle_path') {
+        if (relY > 0.58) {
+          audioSynth.playHoverAmbience('waves');
+        } else if (relX < 0.35 && relY > 0.4) {
+          audioSynth.playHoverAmbience('wind');
+        }
+      } else if (location === 'crossroads_kiln') {
+        if (relX > 0.55 && relY > 0.45) {
+          // Glass kiln fireplace & forge
+          audioSynth.playHoverAmbience('hearth');
+        } else if (relX < 0.35 && relY > 0.45) {
+          audioSynth.playHoverAmbience('leaves');
+        }
+      } else if (location === 'velvet_abyss') {
+        if (relY < 0.65) {
+          // Eerie cosmic abyss void winds
+          audioSynth.playHoverAmbience('wind');
+        }
+      } else if (location === 'windy_road') {
+        if (relY < 0.7) {
+          audioSynth.playHoverAmbience('snow');
+        }
+      } else if (location === 'birthday_feast') {
+        if (relX > 0.25 && relX < 0.75 && relY > 0.45) {
+          audioSynth.playHoverAmbience('chime');
+        }
+      }
     };
 
     const loop = () => {
@@ -55,7 +103,7 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
       window.removeEventListener('mousemove', handleMouseMove);
       cancelAnimationFrame(reqId);
     };
-  }, []);
+  }, [location]);
 
   const handleFoodClick = (e: React.MouseEvent, foodKey: string, textEn: string, textFr: string, emoji: string) => {
     e.stopPropagation();
@@ -228,17 +276,15 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
 
   return (
     <div className="absolute inset-0 w-full h-full overflow-hidden transition-all duration-1000">
-      {/* Parallax Depth Layer with subtle Ken-Burns Cinematic Panning */}
+      {/* Parallax Depth Layer & Ken-Burns Living Camera Drift */}
       <div
-        className="absolute -inset-4 w-[calc(100%+32px)] h-[calc(100%+32px)] pointer-events-auto will-change-transform"
+        className="absolute -inset-6 w-[calc(100%+48px)] h-[calc(100%+48px)] pointer-events-auto will-change-transform animate-ken-burns"
         style={{
           transform: `translate3d(${-mouseParallax.x}px, ${-mouseParallax.y}px, 0)`,
         }}
       >
-        {/* Subtle Ken Burns Slow Camera Panning & Breathing Animation */}
-        <div className="w-full h-full animate-ken-burns">
-          {/* Dynamic Background SVG Art */}
-          {location === 'cottage_twilight' && (
+        {/* Dynamic Background SVG Art */}
+        {location === 'cottage_twilight' && (
         <svg className="w-full h-full object-cover" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid slice">
           <defs>
             <linearGradient id="twilightSky" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -526,15 +572,19 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
             </radialGradient>
           </defs>
           <rect width="1200" height="800" fill="url(#forestSky)" />
-          {/* Deep Forest Tree Silhouettes */}
-          <path d="M0 800 L140 320 L280 800 Z" fill="#022c22" />
-          <path d="M220 800 L360 260 L500 800 Z" fill="#011e17" />
-          <path d="M700 800 L860 290 L1020 800 Z" fill="#022c22" />
-          <path d="M920 800 L1080 340 L1200 800 Z" fill="#011e17" />
+          {/* Deep Forest Tree Silhouettes & Breathing Living Shadows */}
+          <g className="animate-forest-shadow-breathe origin-bottom">
+            <path d="M0 800 L140 320 L280 800 Z" fill="#022c22" />
+            <path d="M220 800 L360 260 L500 800 Z" fill="#011e17" />
+            <path d="M700 800 L860 290 L1020 800 Z" fill="#022c22" />
+            <path d="M920 800 L1080 340 L1200 800 Z" fill="#011e17" />
+          </g>
           {/* Hollow birch trunk */}
-          <path d="M500 480 Q470 650 440 800 L620 800 Q600 650 580 480 Z" fill="#0f172a" />
-          <ellipse cx="530" cy="680" rx="35" ry="55" fill="#022c22" />
-          <circle cx="530" cy="680" r="50" fill="url(#frostGlow)" />
+          <g className="animate-forest-shadow-breathe [animation-delay:2s] origin-bottom">
+            <path d="M500 480 Q470 650 440 800 L620 800 Q600 650 580 480 Z" fill="#0f172a" />
+            <ellipse cx="530" cy="680" rx="35" ry="55" fill="#022c22" />
+            <circle cx="530" cy="680" r="50" fill="url(#frostGlow)" />
+          </g>
         </svg>
       )}
 
@@ -759,21 +809,27 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
           {/* Central Cosmic Depth */}
           <rect width="1200" height="800" fill="url(#chasmFaintGlow)" />
 
-          {/* Distant Jagged Obsidian Spire Monoliths */}
-          <polygon points="120,800 180,280 240,800" fill="url(#obsidianSpires)" opacity="0.7" />
-          <polygon points="260,800 310,340 370,800" fill="#090412" opacity="0.6" />
-          <polygon points="820,800 890,260 960,800" fill="url(#obsidianSpires)" opacity="0.7" />
-          <polygon points="980,800 1040,320 1100,800" fill="#090412" opacity="0.6" />
-          <polygon points="40,800 80,400 130,800" fill="#06020a" opacity="0.8" />
-          <polygon points="1070,800 1120,380 1180,800" fill="#06020a" opacity="0.8" />
+          {/* Distant Jagged Obsidian Spire Monoliths & Breathing Abyss Shadows */}
+          <g className="animate-abyss-shadow-breathe origin-bottom">
+            <polygon points="120,800 180,280 240,800" fill="url(#obsidianSpires)" opacity="0.7" />
+            <polygon points="260,800 310,340 370,800" fill="#090412" opacity="0.6" />
+            <polygon points="820,800 890,260 960,800" fill="url(#obsidianSpires)" opacity="0.7" />
+            <polygon points="980,800 1040,320 1100,800" fill="#090412" opacity="0.6" />
+            <polygon points="40,800 80,400 130,800" fill="#06020a" opacity="0.8" />
+            <polygon points="1070,800 1120,380 1180,800" fill="#06020a" opacity="0.8" />
+          </g>
 
           {/* Looming Chasm Spires in Foreground */}
-          <path d="M0 800 L0 480 Q180 430 280 620 L350 800 Z" fill="#07030e" />
-          <path d="M1200 800 L1200 460 Q1020 420 920 620 L850 800 Z" fill="#07030e" />
+          <g className="animate-abyss-shadow-breathe [animation-delay:3s] origin-bottom">
+            <path d="M0 800 L0 480 Q180 430 280 620 L350 800 Z" fill="#07030e" />
+            <path d="M1200 800 L1200 460 Q1020 420 920 620 L850 800 Z" fill="#07030e" />
+          </g>
 
           {/* Suspended Ancient Obsidian Platform where the entity stands */}
-          <path d="M380 720 Q600 680 820 720 L760 800 L440 800 Z" fill="#090411" />
-          <ellipse cx="600" cy="715" rx="220" ry="32" fill="#050209" stroke="#1c0a33" strokeWidth="1" />
+          <g className="animate-abyss-shadow-breathe [animation-delay:1.5s] origin-bottom">
+            <path d="M380 720 Q600 680 820 720 L760 800 L440 800 Z" fill="#090411" />
+            <ellipse cx="600" cy="715" rx="220" ry="32" fill="#050209" stroke="#1c0a33" strokeWidth="1" />
+          </g>
 
           {/* Inverted umbrella silhouette in far mist */}
           <path d="M260 380 Q285 415 310 380 Z" fill="#130624" opacity="0.5" />
@@ -1345,7 +1401,6 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
           </g>
         </svg>
       )}
-        </div>
       </div>
 
       {/* Floating Canvas Particles */}

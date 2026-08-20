@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { ChevronRight, ChevronLeft, Volume2, VolumeX, History, Play, Pause, Globe, Sparkles } from 'lucide-react';
-import { CharacterId, DialogueText, Language } from '../types';
+import { CharacterExpression, CharacterId, DialogueText, Language } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
 interface DialogueBoxProps {
   speaker: CharacterId;
   speakerName?: DialogueText;
+  expression?: CharacterExpression;
   text: DialogueText;
   language: Language;
   onAdvance: () => void;
@@ -23,6 +24,7 @@ interface DialogueBoxProps {
 export const DialogueBox: React.FC<DialogueBoxProps> = ({
   speaker,
   speakerName,
+  expression,
   text,
   language,
   onAdvance,
@@ -47,27 +49,56 @@ export const DialogueBox: React.FC<DialogueBoxProps> = ({
     audioSynth.setDialogueSpeaking(true);
 
     let currentIndex = 0;
-    const interval = setInterval(() => {
+    let timeoutId: number | null = null;
+    let isCancelled = false;
+
+    // Progressive typewriter speed with emotional slowdown modifiers
+    let baseDelay = 24;
+    if (expression === 'burdened' || expression === 'overwhelmed') {
+      baseDelay = 42; // Slower, heavier deliberate pace
+    } else if (expression === 'grateful' || expression === 'peaceful' || expression === 'warm' || expression === 'inspired') {
+      baseDelay = 32; // Gentle, thoughtful cadence
+    }
+
+    const typeNext = () => {
+      if (isCancelled) return;
+
       if (currentIndex < fullText.length) {
         const nextChar = fullText[currentIndex];
         setDisplayedText(fullText.slice(0, currentIndex + 1));
+
         // Typewriter character voice sound effect with unique pitch per speaker
-        if (currentIndex % 2 === 0 || nextChar === '!' || nextChar === '?') {
+        if (currentIndex % 2 === 0 || nextChar === '!' || nextChar === '?' || nextChar === '…') {
           audioSynth.playTypewriterVoice(speaker, nextChar);
         }
+
         currentIndex++;
+
+        // Emotional punctuation pauses for organic voice cadence
+        let delay = baseDelay;
+        if (nextChar === '.' || nextChar === '!' || nextChar === '?') {
+          delay = baseDelay + (expression === 'burdened' ? 240 : 160);
+        } else if (nextChar === ',' || nextChar === ';' || nextChar === ':') {
+          delay = baseDelay + (expression === 'burdened' ? 140 : 95);
+        } else if (nextChar === '—' || nextChar === '…') {
+          delay = baseDelay + 240;
+        }
+
+        timeoutId = window.setTimeout(typeNext, delay);
       } else {
         setIsTyping(false);
         audioSynth.setDialogueSpeaking(false);
-        clearInterval(interval);
       }
-    }, 24);
+    };
+
+    timeoutId = window.setTimeout(typeNext, baseDelay);
 
     return () => {
-      clearInterval(interval);
+      isCancelled = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
       audioSynth.setDialogueSpeaking(false);
     };
-  }, [fullText, speaker]);
+  }, [fullText, speaker, expression]);
 
   const handleClickBox = (e: React.MouseEvent) => {
     // Prevent event bubbling if clicking controls

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Sun, Sparkles, X, Heart, Shield, Award } from 'lucide-react';
 import { Language } from '../types';
 import { ALL_COLLECTIBLE_LIGHTS } from '../data/storyData';
@@ -16,6 +16,20 @@ export const LightMeter: React.FC<LightMeterProps> = ({
   language,
 }) => {
   const [isOpenDetails, setIsOpenDetails] = useState(false);
+  const [isGlinting, setIsGlinting] = useState(false);
+  const prevCountRef = useRef(collectedLights.length);
+
+  // Trigger glint animation and custom multi-layered chime + harp swell sound effect upon collecting a new light
+  useEffect(() => {
+    if (collectedLights.length > prevCountRef.current) {
+      audioSynth.playLightMeterFillHarpSwell();
+      setIsGlinting(true);
+      const timer = setTimeout(() => setIsGlinting(false), 2400);
+      prevCountRef.current = collectedLights.length;
+      return () => clearTimeout(timer);
+    }
+    prevCountRef.current = collectedLights.length;
+  }, [collectedLights.length]);
 
   // Calculate chapter and progress based on currentSceneId
   const getProgress = (): { percent: number; chapterName: string; chapterNum: number } => {
@@ -111,16 +125,27 @@ export const LightMeter: React.FC<LightMeterProps> = ({
       <button
         id="btn-light-meter-widget"
         onClick={handleToggleDetails}
-        className="group flex items-center gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-slate-950/85 hover:bg-slate-900/95 backdrop-blur-xl border border-amber-400/50 hover:border-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.02] cursor-pointer"
+        className={`group relative flex items-center gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-slate-950/85 hover:bg-slate-900/95 backdrop-blur-xl border border-amber-400/50 hover:border-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.02] cursor-pointer ${
+          isGlinting ? 'animate-meter-glint ring-2 ring-amber-300/80 shadow-[0_0_35px_rgba(251,191,36,0.8)] scale-105' : ''
+        }`}
         title={language === 'en' ? "Super Witch's Light Meter (Click for details)" : "Jauge de Lumière de la Super Sorcière (Cliquez pour détails)"}
       >
+        {/* Fill Celebration Sparkle Burst Particles */}
+        {isGlinting && (
+          <div className="absolute inset-0 rounded-full pointer-events-none overflow-visible flex items-center justify-center">
+            <span className="absolute -top-3 left-1/4 text-amber-300 text-sm animate-meter-sparkle">✨</span>
+            <span className="absolute -bottom-3 right-1/4 text-yellow-200 text-sm animate-meter-sparkle [animation-delay:200ms]">⭐</span>
+            <span className="absolute -top-2 -right-2 text-rose-300 text-xs animate-meter-sparkle [animation-delay:400ms]">💛</span>
+          </div>
+        )}
+
         {/* Glowing Sun Core Icon with spinning rays */}
-        <div className="relative w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 p-0.5 flex items-center justify-center shadow-[0_0_12px_rgba(251,191,36,0.6)]">
+        <div className={`relative w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-gradient-to-tr from-amber-600 via-amber-400 to-yellow-200 p-0.5 flex items-center justify-center shadow-[0_0_12px_rgba(251,191,36,0.6)] ${isGlinting ? 'scale-110' : ''}`}>
           <div className="w-full h-full rounded-full bg-slate-950/90 flex items-center justify-center">
-            <Sun className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-spin-slow" />
+            <Sun className={`w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-spin-slow ${isGlinting ? 'text-amber-100' : ''}`} />
           </div>
           {/* Pulsing Outer Glint */}
-          <div className="absolute inset-0 rounded-full border border-amber-300/80 animate-ping opacity-35 pointer-events-none" />
+          <div className={`absolute inset-0 rounded-full border border-amber-300/80 animate-ping opacity-35 pointer-events-none ${isGlinting ? 'opacity-80 scale-125' : ''}`} />
         </div>
 
         {/* Meter Gauge & Info */}
@@ -138,7 +163,9 @@ export const LightMeter: React.FC<LightMeterProps> = ({
           {/* Golden Celestial Progress Bar */}
           <div className="w-24 sm:w-32 h-1.5 rounded-full bg-slate-800/90 overflow-hidden border border-amber-500/30 p-[1px]">
             <div
-              className="h-full rounded-full bg-gradient-to-r from-amber-500 via-yellow-300 to-rose-300 shadow-[0_0_8px_rgba(251,191,36,0.9)] transition-all duration-700 ease-out"
+              className={`h-full rounded-full bg-gradient-to-r from-amber-500 via-yellow-300 to-rose-300 shadow-[0_0_8px_rgba(251,191,36,0.9)] transition-all duration-700 ease-out ${
+                isGlinting ? 'brightness-125 shadow-[0_0_15px_rgba(251,191,36,1)]' : ''
+              }`}
               style={{ width: `${Math.max(6, percent)}%` }}
             />
           </div>

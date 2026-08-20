@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { CharacterExpression, CharacterId } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
@@ -19,8 +19,41 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
   isSpeaking = true,
   className = '',
 }) => {
+  const portraitRef = useRef<HTMLDivElement>(null);
   const [clickReaction, setClickReaction] = useState<{ text: string; emoji: string } | null>(null);
   const [isOrikBlushing, setIsOrikBlushing] = useState(false);
+  const [isLanternGlowing, setIsLanternGlowing] = useState(false);
+  const [floatingNotes, setFloatingNotes] = useState<Array<{ id: number; symbol: string; left: number; top: number; delay: number }>>([]);
+  const [isHeartbeating, setIsHeartbeating] = useState(false);
+  const [eyeTrackingOffset, setEyeTrackingOffset] = useState({ x: 0, y: 0 });
+
+  // Subtle interactive eye-tracking effect where character's gaze follows player cursor
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!portraitRef.current) return;
+      const rect = portraitRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height * 0.38;
+
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+      // Restrain within soft natural gaze range (max ~2.4px horizontally, ~1.8px vertically in SVG coords)
+      const maxDistance = 420;
+      const intensity = Math.min(1, dist / maxDistance);
+      const targetX = (dx / dist) * intensity * 2.4;
+      const targetY = (dy / dist) * intensity * 1.8;
+
+      setEyeTrackingOffset({
+        x: Math.round(targetX * 10) / 10,
+        y: Math.round(targetY * 10) / 10,
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   if (characterId === 'narrator') return null;
 
@@ -46,8 +79,11 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       audioSynth.playSoundEffect('hypo_squeak');
       setClickReaction({ text: 'Squeak! *wiggles ears* 🦛💧', emoji: '✨' });
     } else if (characterId === 'witch' || characterId === 'human_witch') {
-      audioSynth.playSoundEffect('wendy_giggle');
-      setClickReaction({ text: 'Tee-hee~ 🌸✨', emoji: '🪄' });
+      // Super Witch clicked: Lantern flares with golden glow & celestial chime
+      audioSynth.playLanternGlow();
+      setIsLanternGlowing(true);
+      setTimeout(() => setIsLanternGlowing(false), 2400);
+      setClickReaction({ text: 'The Sun Lantern flares with warm golden light! ☀️✨', emoji: '🌟' });
     } else if (characterId === 'clown') {
       const isAbyssOrMad =
         expression === 'abyss_mad' ||
@@ -65,33 +101,65 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
           expression !== 'gentleman_normal');
 
       if (isAbyssOrMad) {
-        if (expression === 'abyss_mad') {
-          audioSynth.playSoundEffect('dramatic_impact');
-          setClickReaction({ text: 'I am dead inside.', emoji: '💀' });
-        } else {
-          audioSynth.playSoundEffect('abyss_whisper');
-          setClickReaction({ text: 'I am dead inside.', emoji: '🌑' });
-        }
+        // Dark Lord in Abyss clicked: REAL synthesized sub-bass double-thump heartbeat sound
+        audioSynth.playHeartbeat(1.3);
+        setIsHeartbeating(true);
+        setTimeout(() => setIsHeartbeating(false), 1200);
+        setClickReaction({ text: '♥ (a deep heartbeat echoes from the void) ♥', emoji: '🖤' });
       } else {
-        audioSynth.playSoundEffect('clown_musical');
-        setClickReaction({ text: '♪ Tra-la-la! A whimsical tune! 🎩🎶', emoji: '✨' });
+        // Reformed Mélo Clown clicked: Whimsical musical notes flourish & floating notes animation
+        audioSynth.playClownMusicalNote();
+        const noteSymbols = ['🎵', '🎶', '♩', '♫', '🎼', '✨'];
+        const newNotes = Array.from({ length: 6 }).map((_, i) => ({
+          id: Date.now() + i,
+          symbol: noteSymbols[i % noteSymbols.length],
+          left: 20 + Math.random() * 60,
+          top: 30 + Math.random() * 35,
+          delay: i * 110,
+        }));
+        setFloatingNotes(newNotes);
+        setTimeout(() => setFloatingNotes([]), 2600);
+        setClickReaction({ text: '♪ Tra-la-la! A whimsical melody! 🎩✨', emoji: '🎶' });
       }
     } else {
       audioSynth.playSoundEffect('magic_sparkle');
       setClickReaction({ text: '✨', emoji: '🌟' });
     }
-    setTimeout(() => setClickReaction(null), 1400);
+    setTimeout(() => setClickReaction(null), 1800);
   };
+
+  // Character-specific breathing animations for living, organic presence
+  const getCharacterBreatheClass = () => {
+    switch (characterId) {
+      case 'orik':
+        return 'animate-orik-breathe';
+      case 'artisan':
+        return 'animate-vivienne-breathe';
+      case 'lezar':
+        return 'animate-lezar-breathe';
+      case 'hypo':
+        return 'animate-hypo-breathe';
+      case 'clown':
+        return 'animate-clown-breathe';
+      case 'witch':
+      case 'human_witch':
+      default:
+        return 'animate-character-breathe';
+    }
+  };
+
+  const characterBreatheClass = getCharacterBreatheClass();
 
   // Subtle natural breathe animation during silence/idle pauses, or gentle speaking bob during dialogue
   const portraitMovementClass = isSecondary
-    ? 'animate-character-breathe'
+    ? characterBreatheClass
     : isSpeaking
     ? 'animate-speaking-bob'
-    : 'animate-character-breathe';
+    : characterBreatheClass;
 
   return (
     <div
+      ref={portraitRef}
       onClick={handleCharacterClick}
       className={`relative flex items-end justify-center transition-all duration-500 select-none cursor-pointer hover:scale-[1.02] ${
         isSecondary
@@ -106,6 +174,37 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
           <span className="font-semibold">{clickReaction.text}</span>
         </div>
       )}
+
+      {/* Mélo Clown Whimsical Floating Musical Notes Animation */}
+      {floatingNotes.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible">
+          {floatingNotes.map((note) => (
+            <span
+              key={note.id}
+              className="absolute text-xl sm:text-2xl text-amber-300 drop-shadow-[0_0_8px_rgba(251,191,36,0.8)] animate-bounce font-serif"
+              style={{
+                left: `${note.left}%`,
+                top: `${note.top}%`,
+                animationDuration: '1.4s',
+                animationDelay: `${note.delay}ms`,
+                transition: 'all 2s ease-out',
+                transform: 'translateY(-30px) scale(1.15)',
+              }}
+            >
+              {note.symbol}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Dark Lord Heartbeat Void Pulse Visual */}
+      {isHeartbeating && (
+        <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
+          <div className="w-48 h-48 rounded-full border-2 border-purple-500/60 bg-purple-950/20 animate-ping" />
+          <div className="w-32 h-32 rounded-full border border-red-500/40 bg-red-950/20 animate-pulse absolute" />
+        </div>
+      )}
+
       {/* WITCH PORTRAIT (MAGICAL) - REFINED ANATOMICAL PROPORTIONS & GRACEFUL POSTURE */}
       {characterId === 'witch' && (
         <div className="relative w-64 h-80 sm:w-72 sm:h-96 flex items-end justify-center drop-shadow-2xl">
@@ -255,7 +354,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <path d="M116 150 Q106 185 118 210 Q112 185 120 152 Z" fill="url(#witchHair)" opacity="0.8" />
             <path d="M184 150 Q194 185 182 210 Q188 185 180 152 Z" fill="url(#witchHair)" opacity="0.8" />
 
-            {/* Eyes (Light Green) based on expression with natural blink animation */}
+            {/* Eyes (Light Green) based on expression with natural blink animation & cursor tracking */}
             {expression === 'overwhelmed' || expression === 'burdened' ? (
               <g stroke="#047857" strokeWidth="2.5" fill="none" strokeLinecap="round">
                 <path d="M130 166 Q138 172 144 166" />
@@ -268,12 +367,14 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               </g>
             ) : (
               <g className="animate-eye-blink">
-                <ellipse cx="137" cy="166" rx="4.5" ry="5.8" fill="#10b981" />
-                <ellipse cx="163" cy="166" rx="4.5" ry="5.8" fill="#10b981" />
-                <ellipse cx="137" cy="166" rx="2.5" ry="3.5" fill="#064e3b" />
-                <ellipse cx="163" cy="166" rx="2.5" ry="3.5" fill="#064e3b" />
-                <circle cx="138.5" cy="164" r="1.5" fill="#ecfdf5" />
-                <circle cx="164.5" cy="164" r="1.5" fill="#ecfdf5" />
+                <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                  <ellipse cx="137" cy="166" rx="4.5" ry="5.8" fill="#10b981" />
+                  <ellipse cx="163" cy="166" rx="4.5" ry="5.8" fill="#10b981" />
+                  <ellipse cx="137" cy="166" rx="2.5" ry="3.5" fill="#064e3b" />
+                  <ellipse cx="163" cy="166" rx="2.5" ry="3.5" fill="#064e3b" />
+                  <circle cx="138.5" cy="164" r="1.5" fill="#ecfdf5" />
+                  <circle cx="164.5" cy="164" r="1.5" fill="#ecfdf5" />
+                </g>
               </g>
             )}
 
@@ -340,8 +441,8 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <circle cx="145" cy="18" r="1.5" fill="#ffffff" className="animate-glint-flash" />
             </g>
 
-            {/* 9. MAGIC WAND IN LEFT HAND (Firmly gripped in Wendy's hand and pointed toward the stars) */}
-            <g id="witch-hand-and-wand">
+            {/* 9. MAGIC WAND IN LEFT HAND (Gentle organic idle swaying when not actively casting) */}
+            <g id="witch-hand-and-wand" className="animate-wand-idle-sway origin-[96px_236px]">
               {/* Hand Palm / Base */}
               <ellipse cx="96" cy="236" rx="5.5" ry="4.5" fill="#fed7aa" />
 
@@ -383,8 +484,26 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               {/* Brass Chain from Hand to Lantern */}
               <line x1="30" y1="12" x2="30" y2="28" stroke="#d97706" strokeWidth="2" strokeDasharray="2 2" />
 
-              {/* Lantern Warm Ambient Glow */}
-              <circle cx="30" cy="62" r="45" fill="url(#lanternGlowAura)" className="animate-pulse" />
+              {/* Lantern Warm Ambient Glow + Click Sun Flare */}
+              <circle cx="30" cy="62" r={isLanternGlowing ? 75 : 45} fill="url(#lanternGlowAura)" className="animate-pulse" />
+
+              {isLanternGlowing && (
+                <g>
+                  <circle cx="30" cy="62" r="85" fill="#fef08a" opacity="0.35" className="animate-ping" />
+                  <circle cx="30" cy="62" r="55" fill="#fbbf24" opacity="0.45" />
+                  {/* Radiant solar burst beams */}
+                  <g stroke="#fde047" strokeWidth="2" strokeLinecap="round" className="animate-spin-slow origin-center">
+                    <line x1="30" y1="18" x2="30" y2="6" />
+                    <line x1="30" y1="106" x2="30" y2="118" />
+                    <line x1="-14" y1="62" x2="-2" y2="62" />
+                    <line x1="62" y1="62" x2="74" y2="62" />
+                    <line x1="-2" y1="30" x2="6" y2="38" />
+                    <line x1="54" y1="86" x2="62" y2="94" />
+                    <line x1="62" y1="30" x2="54" y2="38" />
+                    <line x1="6" y1="86" x2="-2" y2="94" />
+                  </g>
+                </g>
+              )}
 
               {/* Lantern Top Cap & Brass Ring */}
               <path d="M22 28 Q30 22 38 28 L42 34 L18 34 Z" fill="url(#brassGrad)" stroke="#78350f" strokeWidth="1.2" />
@@ -600,16 +719,18 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               </g>
             )}
 
-            {/* 10. LIGHT GREEN EYES (Bright, gentle, emerald sparkle with natural eye blink) */}
+            {/* 10. LIGHT GREEN EYES (Bright, gentle, emerald sparkle with natural eye blink & cursor tracking) */}
             <g className="animate-eye-blink">
-              <ellipse cx="137" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
-              <ellipse cx="163" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
-              <ellipse cx="137" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
-              <ellipse cx="163" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
-              <circle cx="138.5" cy="165.5" r="2" fill="#ffffff" />
-              <circle cx="164.5" cy="165.5" r="2" fill="#ffffff" />
-              <circle cx="140" cy="170" r="1" fill="#a7f3d0" />
-              <circle cx="166" cy="170" r="1" fill="#a7f3d0" />
+              <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                <ellipse cx="137" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
+                <ellipse cx="163" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
+                <ellipse cx="137" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
+                <ellipse cx="163" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
+                <circle cx="138.5" cy="165.5" r="2" fill="#ffffff" />
+                <circle cx="164.5" cy="165.5" r="2" fill="#ffffff" />
+                <circle cx="140" cy="170" r="1" fill="#a7f3d0" />
+                <circle cx="166" cy="170" r="1" fill="#a7f3d0" />
+              </g>
             </g>
 
             {/* 11. SOFT ROSY CHEEKS */}
@@ -776,16 +897,18 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <path d="M148 115 Q142 98 136 108 Q132 96 126 112" stroke="#ffffff" strokeWidth="2" fill="#ffffff" strokeLinecap="round" />
             </g>
 
-            {/* Cat Aquamarine Eyes with gentle blinking */}
+            {/* Cat Aquamarine Eyes with gentle blinking & cursor tracking */}
             <g className="animate-eye-blink">
-              <ellipse cx="102" cy="140" rx="7.5" ry="9.5" fill="url(#catEyeGlow)" />
-              <ellipse cx="138" cy="140" rx="7.5" ry="9.5" fill="url(#catEyeGlow)" />
-              <ellipse cx="102" cy="140" rx="3.2" ry="8.5" fill="#0c4a6e" />
-              <ellipse cx="138" cy="140" rx="3.2" ry="8.5" fill="#0c4a6e" />
-              <circle cx="104.5" cy="136.5" r="2.8" fill="#ffffff" />
-              <circle cx="140.5" cy="136.5" r="2.8" fill="#ffffff" />
-              <circle cx="100.5" cy="143" r="1.2" fill="#bae6fd" />
-              <circle cx="136.5" cy="143" r="1.2" fill="#bae6fd" />
+              <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                <ellipse cx="102" cy="140" rx="7.5" ry="9.5" fill="url(#catEyeGlow)" />
+                <ellipse cx="138" cy="140" rx="7.5" ry="9.5" fill="url(#catEyeGlow)" />
+                <ellipse cx="102" cy="140" rx="3.2" ry="8.5" fill="#0c4a6e" />
+                <ellipse cx="138" cy="140" rx="3.2" ry="8.5" fill="#0c4a6e" />
+                <circle cx="104.5" cy="136.5" r="2.8" fill="#ffffff" />
+                <circle cx="140.5" cy="136.5" r="2.8" fill="#ffffff" />
+                <circle cx="100.5" cy="143" r="1.2" fill="#bae6fd" />
+                <circle cx="136.5" cy="143" r="1.2" fill="#bae6fd" />
+              </g>
             </g>
 
             {/* Pink Nose & Whisker Muzzle */}
@@ -1221,36 +1344,38 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               {/* Cast Shadow from Top Hat Swallowing Left Half of Face */}
               <path d="M136 112 Q166 142 150 176 Q130 165 136 112 Z" fill="url(#abyssHatShadow)" />
 
-              {/* EYES */}
+              {/* EYES with cursor tracking */}
               <g className="animate-eye-blink">
-                {/* Left Eye (in shadow) */}
-                <ellipse cx="152" cy="146" rx="4" ry="5.2" fill="#030206" />
-                {expression === 'holding_cake' || expression === 'gentleman_soft' || expression === 'gentleman_surprised' ? (
-                  <circle cx="153" cy="144" r="1" fill="#fef08a" opacity="0.8" />
-                ) : null}
+                <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                  {/* Left Eye (in shadow) */}
+                  <ellipse cx="152" cy="146" rx="4" ry="5.2" fill="#030206" />
+                  {expression === 'holding_cake' || expression === 'gentleman_soft' || expression === 'gentleman_surprised' ? (
+                    <circle cx="153" cy="144" r="1" fill="#fef08a" opacity="0.8" />
+                  ) : null}
 
-                {/* Right Eye (Under Monocle) */}
-                {expression === 'gentleman_surprised' ? (
-                  <g fill="#09090b">
-                    <circle cx="188" cy="146" r="5.5" />
-                    <circle cx="189.5" cy="144.5" r="1.8" fill="#ffffff" />
-                  </g>
-                ) : expression === 'gentleman_soft' ? (
-                  <g stroke="#09090b" strokeWidth="2" strokeLinecap="round" fill="none">
-                    <path d="M181 146 Q188 141 195 146" />
-                  </g>
-                ) : expression === 'holding_cake' ? (
-                  <g>
-                    <ellipse cx="188" cy="146" rx="3.8" ry="4.8" fill="#09090b" />
-                    <circle cx="189.5" cy="144" r="1.5" fill="#ffffff" />
-                  </g>
-                ) : (
-                  /* Smirk / Theatrical wry journey mode */
-                  <g>
-                    <ellipse cx="188" cy="146" rx="4" ry="5" fill="#09090b" />
-                    <circle cx="189.5" cy="144.5" r="1.4" fill="#fbbf24" />
-                  </g>
-                )}
+                  {/* Right Eye (Under Monocle) */}
+                  {expression === 'gentleman_surprised' ? (
+                    <g fill="#09090b">
+                      <circle cx="188" cy="146" r="5.5" />
+                      <circle cx="189.5" cy="144.5" r="1.8" fill="#ffffff" />
+                    </g>
+                  ) : expression === 'gentleman_soft' ? (
+                    <g stroke="#09090b" strokeWidth="2" strokeLinecap="round" fill="none">
+                      <path d="M181 146 Q188 141 195 146" />
+                    </g>
+                  ) : expression === 'holding_cake' ? (
+                    <g>
+                      <ellipse cx="188" cy="146" rx="3.8" ry="4.8" fill="#09090b" />
+                      <circle cx="189.5" cy="144" r="1.5" fill="#ffffff" />
+                    </g>
+                  ) : (
+                    /* Smirk / Theatrical wry journey mode */
+                    <g>
+                      <ellipse cx="188" cy="146" rx="4" ry="5" fill="#09090b" />
+                      <circle cx="189.5" cy="144.5" r="1.4" fill="#fbbf24" />
+                    </g>
+                  )}
+                </g>
               </g>
 
               {/* EYEBROWS */}
@@ -1480,12 +1605,14 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               </g>
             )}
 
-            {/* Eyes */}
+            {/* Eyes with cursor tracking */}
             <g className="animate-eye-blink">
-              <ellipse cx="88" cy="118" rx="4.5" ry="6" fill="#14532d" />
-              <ellipse cx="112" cy="118" rx="4.5" ry="6" fill="#14532d" />
-              <circle cx="89" cy="116" r="1.5" fill="#ffffff" />
-              <circle cx="113" cy="116" r="1.5" fill="#ffffff" />
+              <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                <ellipse cx="88" cy="118" rx="4.5" ry="6" fill="#14532d" />
+                <ellipse cx="112" cy="118" rx="4.5" ry="6" fill="#14532d" />
+                <circle cx="89" cy="116" r="1.5" fill="#ffffff" />
+                <circle cx="113" cy="116" r="1.5" fill="#ffffff" />
+              </g>
             </g>
 
             {/* Rosy Blush Cheeks when clicked or happy */}
@@ -1639,12 +1766,14 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               </g>
             )}
 
-            {/* Eyes */}
+            {/* Eyes with cursor tracking */}
             <g className="animate-eye-blink">
-              <ellipse cx="108" cy="120" rx="3.8" ry="4.8" fill="#292524" />
-              <ellipse cx="132" cy="120" rx="3.8" ry="4.8" fill="#292524" />
-              <circle cx="109" cy="118" r="1.3" fill="#ffffff" />
-              <circle cx="133" cy="118" r="1.3" fill="#ffffff" />
+              <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                <ellipse cx="108" cy="120" rx="3.8" ry="4.8" fill="#292524" />
+                <ellipse cx="132" cy="120" rx="3.8" ry="4.8" fill="#292524" />
+                <circle cx="109" cy="118" r="1.3" fill="#ffffff" />
+                <circle cx="133" cy="118" r="1.3" fill="#ffffff" />
+              </g>
             </g>
 
             {/* REALISTIC NATURAL TEARS STREAMING DOWN HER CHEEKS WHEN SAD (Before Helped) */}
@@ -1731,12 +1860,14 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <ellipse cx="106" cy="140" rx="3.5" ry="4.5" fill="#64748b" />
             <ellipse cx="134" cy="140" rx="3.5" ry="4.5" fill="#64748b" />
 
-            {/* Sweet Stitched Eyes */}
+            {/* Sweet Stitched Eyes with cursor tracking */}
             <g className="animate-eye-blink">
-              <ellipse cx="102" cy="118" rx="4" ry="5.5" fill="#1e293b" />
-              <ellipse cx="138" cy="118" rx="4" ry="5.5" fill="#1e293b" />
-              <circle cx="103.5" cy="116" r="1.5" fill="#ffffff" />
-              <circle cx="139.5" cy="116" r="1.5" fill="#ffffff" />
+              <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
+                <ellipse cx="102" cy="118" rx="4" ry="5.5" fill="#1e293b" />
+                <ellipse cx="138" cy="118" rx="4" ry="5.5" fill="#1e293b" />
+                <circle cx="103.5" cy="116" r="1.5" fill="#ffffff" />
+                <circle cx="139.5" cy="116" r="1.5" fill="#ffffff" />
+              </g>
             </g>
 
             {/* Rosy Cheeks */}

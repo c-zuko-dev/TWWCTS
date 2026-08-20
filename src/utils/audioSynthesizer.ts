@@ -53,6 +53,20 @@ class AudioSynthesizer {
 
         this.ctx = new AudioCtxClass();
 
+        // Master Limiter & Warmth Conditioning Stage (prevents clipping, softens transients)
+        const masterCompressor = this.ctx.createDynamicsCompressor();
+        masterCompressor.threshold.setValueAtTime(-14, this.ctx.currentTime);
+        masterCompressor.knee.setValueAtTime(24, this.ctx.currentTime); // Gentle soft-knee
+        masterCompressor.ratio.setValueAtTime(3.5, this.ctx.currentTime);
+        masterCompressor.attack.setValueAtTime(0.003, this.ctx.currentTime); // Fast transparent peak handling
+        masterCompressor.release.setValueAtTime(0.22, this.ctx.currentTime);
+
+        // Analog Storybook Warmth Filter (removes harsh digital high-frequency aliasing)
+        const masterWarmthFilter = this.ctx.createBiquadFilter();
+        masterWarmthFilter.type = 'lowpass';
+        masterWarmthFilter.frequency.setValueAtTime(9600, this.ctx.currentTime);
+        masterWarmthFilter.Q.setValueAtTime(0.7, this.ctx.currentTime); // Butterworth gentle slope
+
         this.masterGain = this.ctx.createGain();
         this.musicGain = this.ctx.createGain();
         this.sfxGain = this.ctx.createGain();
@@ -60,15 +74,19 @@ class AudioSynthesizer {
         this.voiceGain = this.ctx.createGain();
 
         this.masterGain.gain.value = this.isMuted ? 0 : this.volume;
-        this.musicGain.gain.value = 0.32;
-        this.sfxGain.gain.value = 0.48;
-        this.ambienceGain.gain.value = 0.56;
-        this.voiceGain.gain.value = 0.09;
+        this.musicGain.gain.value = 0.28;
+        this.sfxGain.gain.value = 0.40;
+        this.ambienceGain.gain.value = 0.46;
+        this.voiceGain.gain.value = 0.085;
 
-        this.musicGain.connect(this.masterGain);
-        this.sfxGain.connect(this.masterGain);
-        this.ambienceGain.connect(this.masterGain);
-        this.voiceGain.connect(this.masterGain);
+        // Route individual buses into the master compressor & warmth filter
+        this.musicGain.connect(masterCompressor);
+        this.sfxGain.connect(masterCompressor);
+        this.ambienceGain.connect(masterCompressor);
+        this.voiceGain.connect(masterCompressor);
+
+        masterCompressor.connect(masterWarmthFilter);
+        masterWarmthFilter.connect(this.masterGain);
         this.masterGain.connect(this.ctx.destination);
 
         this.isInitialized = true;
@@ -1299,6 +1317,557 @@ class AudioSynthesizer {
             osc.start(t + idx * 0.03);
             osc.stop(t + idx * 0.03 + 0.46);
           });
+          break;
+        }
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  public playGoldenChime() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      // Ascending pentatonic golden bell arpeggio with ethereal harmonics
+      const freqs = [587.33, 739.99, 880.0, 1108.73, 1318.51]; // D5, F#5, A5, C#6, E6
+      freqs.forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteTime = t + idx * 0.055;
+        
+        // Fundamental bell oscillator
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        // Warm harmonic overtone for chime sparkle
+        const overtone = this.ctx.createOscillator();
+        const overtoneGain = this.ctx.createGain();
+        overtone.type = 'triangle';
+        overtone.frequency.setValueAtTime(freq * 2.75, noteTime);
+
+        gain.gain.setValueAtTime(0.001, noteTime);
+        gain.gain.linearRampToValueAtTime(0.18 - idx * 0.02, noteTime + 0.015);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.95);
+
+        overtoneGain.gain.setValueAtTime(0.001, noteTime);
+        overtoneGain.gain.linearRampToValueAtTime(0.06, noteTime + 0.01);
+        overtoneGain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.45);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        overtone.connect(overtoneGain);
+        overtoneGain.connect(this.sfxGain);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 1.0);
+        overtone.start(noteTime);
+        overtone.stop(noteTime + 0.5);
+      });
+    } catch {
+      // non-fatal audio catch
+    }
+  }
+
+  /**
+   * Custom Multi-Layered Sound Effect for the LightMeter fill-up.
+   * Blends a soft golden chime with a subtle, resonant musical harp swell
+   * and deep emotional pad to signify the emotional weight of collecting light.
+   */
+  public playLightMeterFillHarpSwell() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+
+      // Layer 1: Sub Warmth (Gentle low pad on D3 for emotional gravity)
+      const subOsc = this.ctx.createOscillator();
+      const subGain = this.ctx.createGain();
+      const subFilter = this.ctx.createBiquadFilter();
+      subOsc.type = 'sine';
+      subOsc.frequency.setValueAtTime(146.83, t); // D3
+      subFilter.type = 'lowpass';
+      subFilter.frequency.setValueAtTime(320, t);
+
+      subGain.gain.setValueAtTime(0.001, t);
+      subGain.gain.linearRampToValueAtTime(0.22, t + 0.18);
+      subGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.4);
+
+      subOsc.connect(subFilter);
+      subFilter.connect(subGain);
+      subGain.connect(this.sfxGain);
+      subOsc.start(t);
+      subOsc.stop(t + 2.5);
+
+      // Layer 2: Plucked Harp Swell Arpeggio (D major 9 / Lydian warmth: D4, F#4, A4, C#5, D5, F#5, A5)
+      const harpNotes = [
+        { freq: 293.66, delay: 0.0 },   // D4
+        { freq: 369.99, delay: 0.05 },  // F#4
+        { freq: 440.00, delay: 0.10 },  // A4
+        { freq: 554.37, delay: 0.15 },  // C#5
+        { freq: 587.33, delay: 0.20 },  // D5
+        { freq: 739.99, delay: 0.25 },  // F#5
+        { freq: 880.00, delay: 0.30 },  // A5
+        { freq: 1174.66, delay: 0.36 }, // D6 (apex)
+      ];
+
+      harpNotes.forEach(({ freq, delay }) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteTime = t + delay;
+
+        // Plucked acoustic body (sine with slight triangle overtone)
+        const osc = this.ctx.createOscillator();
+        const oscTri = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const filter = this.ctx.createBiquadFilter();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        oscTri.type = 'triangle';
+        oscTri.frequency.setValueAtTime(freq * 2, noteTime);
+
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(2400, noteTime);
+        filter.frequency.exponentialRampToValueAtTime(600, noteTime + 1.2);
+
+        gain.gain.setValueAtTime(0.001, noteTime);
+        gain.gain.linearRampToValueAtTime(0.18, noteTime + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 1.6);
+
+        osc.connect(filter);
+        oscTri.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(noteTime);
+        oscTri.start(noteTime);
+        osc.stop(noteTime + 1.7);
+        oscTri.stop(noteTime + 1.7);
+      });
+
+      // Layer 3: Shimmering Golden Bell Chimes on the Apex
+      const chimeNotes = [
+        { freq: 1174.66, delay: 0.38 }, // D6
+        { freq: 1479.98, delay: 0.44 }, // F#6
+        { freq: 1760.00, delay: 0.50 }, // A6
+        { freq: 2349.32, delay: 0.56 }, // D7
+      ];
+
+      chimeNotes.forEach(({ freq, delay }) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteTime = t + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.001, noteTime);
+        gain.gain.linearRampToValueAtTime(0.12, noteTime + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 1.4);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 1.5);
+      });
+    } catch {
+      // non-fatal audio catch
+    }
+  }
+
+  /**
+   * Real Synthesized Deep Heartbeat Sound.
+   * Produces an authentic, resonant double-thump (lub-dub) with visceral sub-bass.
+   */
+  public playHeartbeat(intensity: number = 1.0) {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      const vol = Math.min(Math.max(intensity, 0.4), 1.6);
+
+      // Thump 1: "Lub" (Deeper, broader)
+      const osc1 = this.ctx.createOscillator();
+      const sub1 = this.ctx.createOscillator();
+      const gain1 = this.ctx.createGain();
+      const filter1 = this.ctx.createBiquadFilter();
+
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(62, t);
+      osc1.frequency.exponentialRampToValueAtTime(38, t + 0.14);
+
+      sub1.type = 'triangle';
+      sub1.frequency.setValueAtTime(46, t);
+      sub1.frequency.exponentialRampToValueAtTime(32, t + 0.14);
+
+      filter1.type = 'lowpass';
+      filter1.frequency.setValueAtTime(110, t);
+
+      gain1.gain.setValueAtTime(0.001, t);
+      gain1.gain.linearRampToValueAtTime(0.48 * vol, t + 0.016);
+      gain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.18);
+
+      osc1.connect(filter1);
+      sub1.connect(filter1);
+      filter1.connect(gain1);
+      gain1.connect(this.sfxGain);
+
+      osc1.start(t);
+      sub1.start(t);
+      osc1.stop(t + 0.2);
+      sub1.stop(t + 0.2);
+
+      // Thump 2: "Dub" (Slightly softer, ~160ms later)
+      const t2 = t + 0.16;
+      const osc2 = this.ctx.createOscillator();
+      const sub2 = this.ctx.createOscillator();
+      const gain2 = this.ctx.createGain();
+      const filter2 = this.ctx.createBiquadFilter();
+
+      osc2.type = 'sine';
+      osc2.frequency.setValueAtTime(54, t2);
+      osc2.frequency.exponentialRampToValueAtTime(34, t2 + 0.16);
+
+      sub2.type = 'triangle';
+      sub2.frequency.setValueAtTime(40, t2);
+      sub2.frequency.exponentialRampToValueAtTime(28, t2 + 0.16);
+
+      filter2.type = 'lowpass';
+      filter2.frequency.setValueAtTime(95, t2);
+
+      gain2.gain.setValueAtTime(0.001, t2);
+      gain2.gain.linearRampToValueAtTime(0.38 * vol, t2 + 0.014);
+      gain2.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.2);
+
+      osc2.connect(filter2);
+      sub2.connect(filter2);
+      filter2.connect(gain2);
+      gain2.connect(this.sfxGain);
+
+      osc2.start(t2);
+      sub2.start(t2);
+      osc2.stop(t2 + 0.22);
+      sub2.stop(t2 + 0.22);
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Mélo Clown Whimsical Musical Note Flourish.
+   * Plays a charming music-box note melody with playful bell timbre.
+   */
+  public playClownMusicalNote() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      // Cheerful music box staccato run
+      const notes = [
+        { freq: 783.99, delay: 0.0 },   // G5
+        { freq: 1046.50, delay: 0.07 }, // C6
+        { freq: 1318.51, delay: 0.14 }, // E6
+        { freq: 1567.98, delay: 0.21 }, // G6
+        { freq: 2093.00, delay: 0.28 }, // C7
+      ];
+
+      notes.forEach(({ freq, delay }) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteTime = t + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        // Subtle vibrato
+        const vib = this.ctx.createOscillator();
+        const vibGain = this.ctx.createGain();
+        vib.frequency.setValueAtTime(6.5, noteTime);
+        vibGain.gain.setValueAtTime(14, noteTime);
+        vib.connect(vibGain);
+        vibGain.connect(osc.frequency);
+
+        gain.gain.setValueAtTime(0.001, noteTime);
+        gain.gain.linearRampToValueAtTime(0.18, noteTime + 0.008);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.7);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        vib.start(noteTime);
+        osc.start(noteTime);
+        vib.stop(noteTime + 0.72);
+        osc.stop(noteTime + 0.72);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Super Witch Sun Lantern Radiant Glow Sound.
+   * Radiant chord swell with sparkling celestial harmonics.
+   */
+  public playLanternGlow() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      // D major / Lydian radiant sun chord
+      const freqs = [293.66, 440, 587.33, 739.99, 1174.66, 1760];
+      freqs.forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+        osc.frequency.setValueAtTime(freq, t);
+
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.15 - idx * 0.015, t + 0.12);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.8);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(t);
+        osc.stop(t + 1.85);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  /**
+   * Storybook Golden Magic Ink Writing Sound.
+   * Whispering parchment texture and warm golden sparkle glissando.
+   */
+  public playMagicInkWriting() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+
+      // 1. Soft whispering parchment brush friction
+      const noiseBuffer = this.createWarmNoiseBuffer();
+      if (noiseBuffer) {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1400, t);
+        filter.frequency.linearRampToValueAtTime(1800, t + 0.4);
+        filter.frequency.linearRampToValueAtTime(1200, t + 1.2);
+        filter.Q.setValueAtTime(2.2, t);
+
+        const gain = this.ctx.createGain();
+        gain.gain.setValueAtTime(0.001, t);
+        gain.gain.linearRampToValueAtTime(0.06, t + 0.15);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+
+        noise.connect(filter);
+        filter.connect(gain);
+        gain.connect(this.sfxGain);
+        noise.start(t);
+        noise.stop(t + 1.45);
+      }
+
+      // 2. Delicate crystalline golden ink chimes (stardust melody)
+      const chimes = [
+        { freq: 880.0, delay: 0.05 },   // A5
+        { freq: 1108.73, delay: 0.18 }, // C#6
+        { freq: 1318.51, delay: 0.32 }, // E6
+        { freq: 1661.22, delay: 0.46 }, // G#6
+        { freq: 2217.46, delay: 0.62 }, // C#7
+      ];
+
+      chimes.forEach(({ freq, delay }) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteTime = t + delay;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, noteTime);
+
+        gain.gain.setValueAtTime(0.001, noteTime);
+        gain.gain.linearRampToValueAtTime(0.08, noteTime + 0.02);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteTime + 0.85);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(noteTime);
+        osc.stop(noteTime + 0.9);
+      });
+    } catch {
+      // ignore
+    }
+  }
+
+  private lastHoverSoundTime: Record<string, number> = {};
+
+  /**
+   * Scenic Background Interactive Hover Zone Sound.
+   * Throttled per zone type so it plays smoothly as the mouse discovers scenic secrets.
+   */
+  public playHoverAmbience(type: 'leaves' | 'waves' | 'wind' | 'chime' | 'hearth' | 'crystal' | 'snow') {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const now = performance.now();
+      const lastTime = this.lastHoverSoundTime[type] || 0;
+      if (now - lastTime < 1600) return; // 1.6s cooldown per zone type
+      this.lastHoverSoundTime[type] = now;
+
+      const t = this.ctx.currentTime;
+
+      switch (type) {
+        case 'leaves': {
+          // Soft rustle of ancient leaves
+          const noiseBuffer = this.createWarmNoiseBuffer();
+          if (noiseBuffer) {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.setValueAtTime(950, t);
+            filter.Q.setValueAtTime(1.8, t);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.001, t);
+            gain.gain.linearRampToValueAtTime(0.11, t + 0.15);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.7);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.sfxGain);
+            noise.start(t);
+            noise.stop(t + 0.75);
+          }
+          break;
+        }
+
+        case 'waves': {
+          // Distant ocean wave roll
+          const noiseBuffer = this.createWarmNoiseBuffer();
+          if (noiseBuffer) {
+            const noise = this.ctx.createBufferSource();
+            noise.buffer = noiseBuffer;
+            const filter = this.ctx.createBiquadFilter();
+            filter.type = 'lowpass';
+            filter.frequency.setValueAtTime(240, t);
+            filter.frequency.linearRampToValueAtTime(520, t + 0.4);
+            filter.frequency.exponentialRampToValueAtTime(180, t + 1.2);
+
+            const gain = this.ctx.createGain();
+            gain.gain.setValueAtTime(0.001, t);
+            gain.gain.linearRampToValueAtTime(0.14, t + 0.4);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + 1.3);
+
+            noise.connect(filter);
+            filter.connect(gain);
+            gain.connect(this.sfxGain);
+            noise.start(t);
+            noise.stop(t + 1.35);
+          }
+          break;
+        }
+
+        case 'wind': {
+          // Gentle airy breeze whistle
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(320, t);
+          osc.frequency.linearRampToValueAtTime(460, t + 0.35);
+          osc.frequency.linearRampToValueAtTime(280, t + 0.9);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.09, t + 0.3);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.95);
+
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(t);
+          osc.stop(t + 1.0);
+          break;
+        }
+
+        case 'chime':
+        case 'crystal': {
+          // Delicate crystal resonance
+          const freqs = type === 'crystal' ? [659.25, 987.77, 1318.51] : [880, 1174.66, 1760];
+          freqs.forEach((f, idx) => {
+            if (!this.ctx || !this.sfxGain) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, t + idx * 0.05);
+
+            gain.gain.setValueAtTime(0.001, t + idx * 0.05);
+            gain.gain.linearRampToValueAtTime(0.1, t + idx * 0.05 + 0.01);
+            gain.gain.exponentialRampToValueAtTime(0.0001, t + idx * 0.05 + 0.9);
+
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(t + idx * 0.05);
+            osc.stop(t + idx * 0.05 + 0.95);
+          });
+          break;
+        }
+
+        case 'hearth': {
+          // Warm crackle
+          [0, 0.08, 0.18].forEach((delay) => {
+            if (!this.ctx || !this.sfxGain) return;
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(320, t + delay);
+            osc.frequency.exponentialRampToValueAtTime(140, t + delay + 0.04);
+
+            gain.gain.setValueAtTime(0.08, t + delay);
+            gain.gain.exponentialRampToValueAtTime(0.001, t + delay + 0.05);
+
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(t + delay);
+            osc.stop(t + delay + 0.06);
+          });
+          break;
+        }
+
+        case 'snow': {
+          // Delicate frozen powder whisper
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(1200, t);
+          osc.frequency.exponentialRampToValueAtTime(1800, t + 0.15);
+
+          gain.gain.setValueAtTime(0.001, t);
+          gain.gain.linearRampToValueAtTime(0.06, t + 0.03);
+          gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+
+          osc.connect(gain);
+          gain.connect(this.sfxGain);
+          osc.start(t);
+          osc.stop(t + 0.4);
           break;
         }
       }
@@ -2938,16 +3507,36 @@ class AudioSynthesizer {
       if (!this.ctx) return null;
       if (this.cachedNoiseBuffer) return this.cachedNoiseBuffer;
 
-      const bufferSize = this.ctx.sampleRate * 2;
-      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
-      const output = buffer.getChannelData(0);
-      let lastOut = 0.0;
-      for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
-        output[i] = (lastOut + 0.02 * white) / 1.02;
-        lastOut = output[i];
-        output[i] *= 3.5;
+      // 3-second seamless stereo warm acoustic noise buffer
+      const bufferSize = this.ctx.sampleRate * 3;
+      const buffer = this.ctx.createBuffer(2, bufferSize, this.ctx.sampleRate);
+      
+      for (let channel = 0; channel < 2; channel++) {
+        const output = buffer.getChannelData(channel);
+        let b0 = 0, b1 = 0, b2 = 0, b3 = 0, b4 = 0, b5 = 0, b6 = 0;
+        
+        for (let i = 0; i < bufferSize; i++) {
+          const white = Math.random() * 2 - 1;
+          // Paul Kellet's refined pink filter algorithm with brownian lowpass roll-off
+          b0 = 0.99886 * b0 + white * 0.0555179;
+          b1 = 0.99332 * b1 + white * 0.0750759;
+          b2 = 0.96900 * b2 + white * 0.1538520;
+          b3 = 0.86650 * b3 + white * 0.3104856;
+          b4 = 0.55000 * b4 + white * 0.5329522;
+          b5 = -0.7616 * b5 - white * 0.0168980;
+          const pink = b0 + b1 + b2 + b3 + b4 + b5 + b6 + white * 0.5362;
+          b6 = white * 0.115926;
+          
+          // Cross-fade window at edges to eliminate any seam click
+          const fadeSamples = Math.floor(this.ctx.sampleRate * 0.05);
+          let env = 1.0;
+          if (i < fadeSamples) env = i / fadeSamples;
+          else if (i > bufferSize - fadeSamples) env = (bufferSize - i) / fadeSamples;
+          
+          output[i] = pink * 0.11 * env;
+        }
       }
+
       this.cachedNoiseBuffer = buffer;
       return buffer;
     } catch {

@@ -480,8 +480,37 @@ interface MarmotCompanionProps {
 }
 
 export const MarmotCompanion: React.FC<MarmotCompanionProps> = ({ language }) => {
+  const marmotRef = React.useRef<HTMLDivElement>(null);
   const [speechBubble, setSpeechBubble] = React.useState<string | null>(null);
   const [marmotAnim, setMarmotAnim] = React.useState<'idle' | 'stretch' | 'yawn' | 'bounce' | 'snack'>('idle');
+  const [eyeOffset, setEyeOffset] = React.useState({ x: 0, y: 0 });
+
+  // Subtle interactive gaze tracking for the cute title marmot
+  React.useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!marmotRef.current) return;
+      const rect = marmotRef.current.getBoundingClientRect();
+      const centerX = rect.left + rect.width / 2;
+      const centerY = rect.top + rect.height / 2;
+
+      const dx = e.clientX - centerX;
+      const dy = e.clientY - centerY;
+      const dist = Math.sqrt(dx * dx + dy * dy) || 1;
+
+      const maxDist = 350;
+      const intensity = Math.min(1, dist / maxDist);
+      const targetX = (dx / dist) * intensity * 1.8;
+      const targetY = (dy / dist) * intensity * 1.4;
+
+      setEyeOffset({
+        x: Math.round(targetX * 10) / 10,
+        y: Math.round(targetY * 10) / 10,
+      });
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, []);
 
   const chirps = React.useMemo(() => {
     return language === 'en'
@@ -542,6 +571,7 @@ export const MarmotCompanion: React.FC<MarmotCompanionProps> = ({ language }) =>
 
   return (
     <div
+      ref={marmotRef}
       id="title-marmot-companion"
       className="mt-6 flex flex-col items-center cursor-pointer group select-none transition-transform"
       onClick={handleMarmotClick}
@@ -597,13 +627,13 @@ export const MarmotCompanion: React.FC<MarmotCompanionProps> = ({ language }) =>
           <path d="M10 115 Q70 95 130 115 L140 120 L0 120 Z" fill="#1e293b" opacity="0.6" />
           <path d="M15 116 Q70 100 125 116" stroke="#059669" strokeWidth="4" strokeLinecap="round" />
           {/* Flower 1 */}
-          <circle cx="28" cy="108" r="2.5" fill="#fbbf24" />
+          <circle cx="28" cy="108" r="2.5" fill="#fbbf24" className="animate-pulse" />
           <circle cx="28" cy="108" r="1" fill="#ffffff" />
           {/* Flower 2 */}
-          <circle cx="112" cy="110" r="2.5" fill="#f472b6" />
+          <circle cx="112" cy="110" r="2.5" fill="#f472b6" className="animate-pulse" />
           <circle cx="112" cy="110" r="1" fill="#ffffff" />
 
-          {/* Fluffy Marmot Tail */}
+          {/* Fluffy Marmot Tail (Animated Wagging) */}
           <ellipse
             cx="38"
             cy="85"
@@ -611,100 +641,114 @@ export const MarmotCompanion: React.FC<MarmotCompanionProps> = ({ language }) =>
             ry="9"
             fill="#451a03"
             transform={marmotAnim === 'bounce' || marmotAnim === 'stretch' ? 'rotate(-35 38 85)' : 'rotate(-20 38 85)'}
-            className="transition-transform duration-300"
+            className={`transition-transform duration-300 ${marmotAnim === 'idle' ? 'animate-marmot-tail' : ''}`}
           />
 
-          {/* Chubby Marmot Body */}
-          <ellipse cx="70" cy={marmotAnim === 'stretch' ? '72' : '76'} rx="26" ry={marmotAnim === 'stretch' ? '28' : '24'} fill="url(#marmotFurGrad)" />
+          {/* Chubby Marmot Body (Animated Breathing) */}
+          <g className={marmotAnim === 'idle' ? 'animate-marmot-breathe' : ''}>
+            <ellipse cx="70" cy={marmotAnim === 'stretch' ? '72' : '76'} rx="26" ry={marmotAnim === 'stretch' ? '28' : '24'} fill="url(#marmotFurGrad)" />
 
-          {/* Creamy Soft Belly */}
-          <ellipse cx="70" cy={marmotAnim === 'stretch' ? '76' : '80'} rx="16" ry={marmotAnim === 'stretch' ? '19' : '17'} fill="url(#marmotBellyGrad)" />
-
-          {/* Marmot Head */}
-          <ellipse cx="70" cy={marmotAnim === 'stretch' ? '41' : '46'} rx="20" ry="18" fill="url(#marmotFurGrad)" />
-
-          {/* Round Furry Ears with Pink Centers */}
-          {/* Left Ear */}
-          <ellipse
-            cx="54"
-            cy={marmotAnim === 'stretch' ? '28' : '33'}
-            rx="5.5"
-            ry="6"
-            fill="#78350f"
-            className="group-hover:rotate-12 origin-bottom transition-transform"
-          />
-          <ellipse cx="54" cy={marmotAnim === 'stretch' ? '28' : '33'} rx="3.5" ry="4" fill="#fbcfe8" />
-          {/* Right Ear */}
-          <ellipse
-            cx="86"
-            cy={marmotAnim === 'stretch' ? '28' : '33'}
-            rx="5.5"
-            ry="6"
-            fill="#78350f"
-            className="group-hover:-rotate-12 origin-bottom transition-transform"
-          />
-          <ellipse cx="86" cy={marmotAnim === 'stretch' ? '28' : '33'} rx="3.5" ry="4" fill="#fbcfe8" />
-
-          {/* Creamy Snout & Muzzle */}
-          <ellipse cx="70" cy={marmotAnim === 'stretch' ? '47' : '52'} rx="11" ry="8" fill="url(#marmotBellyGrad)" />
-
-          {/* Twitchy Black Nose */}
-          <ellipse cx="70" cy={marmotAnim === 'stretch' ? '43' : '48'} rx="3" ry="2.2" fill="#18181b" />
-
-          {/* Marmot Mouth - Custom Yawn vs Snacking vs Normal */}
-          {marmotAnim === 'yawn' ? (
-            <g>
-              {/* Wide Yawning Mouth */}
-              <ellipse cx="70" cy="55" rx="6" ry="7" fill="#881337" stroke="#78350f" strokeWidth="1" />
-              {/* Little pink tongue */}
-              <ellipse cx="70" cy="58" rx="3.5" ry="2.5" fill="#fb7185" />
-              {/* Tiny upper buck teeth */}
-              <rect x="68" y="48.5" width="4" height="2" rx="0.5" fill="#ffffff" />
-            </g>
-          ) : marmotAnim === 'snack' ? (
-            <g>
-              {/* Chewing little mouth */}
-              <ellipse cx="70" cy="53" rx="4" ry="2.5" fill="#881337" />
-              <circle cx="70" cy="56" r="2.5" fill="#92400e" stroke="#451a03" strokeWidth="0.5" />
-            </g>
-          ) : (
-            <g>
-              <path d="M66 53 Q70 56 74 53" stroke="#78350f" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-              <rect x="68" y="53" width="4" height="3" rx="1" fill="#ffffff" stroke="#78350f" strokeWidth="0.5" />
-            </g>
-          )}
-
-          {/* Rosy Cheeks */}
-          <ellipse cx="57" cy={marmotAnim === 'stretch' ? '45' : '50'} rx="3.5" ry="2" fill="#f43f5e" opacity="0.45" />
-          <ellipse cx="83" cy={marmotAnim === 'stretch' ? '45' : '50'} rx="3.5" ry="2" fill="#f43f5e" opacity="0.45" />
-
-          {/* Whiskers */}
-          <g stroke="#92400e" strokeWidth="0.8" opacity="0.7">
-            <line x1="56" y1={marmotAnim === 'stretch' ? '44' : '49'} x2="44" y2={marmotAnim === 'stretch' ? '42' : '47'} />
-            <line x1="56" y1={marmotAnim === 'stretch' ? '47' : '52'} x2="43" y2={marmotAnim === 'stretch' ? '48' : '53'} />
-            <line x1="84" y1={marmotAnim === 'stretch' ? '44' : '49'} x2="96" y2={marmotAnim === 'stretch' ? '42' : '47'} />
-            <line x1="84" y1={marmotAnim === 'stretch' ? '47' : '52'} x2="97" y2={marmotAnim === 'stretch' ? '48' : '53'} />
+            {/* Creamy Soft Belly */}
+            <ellipse cx="70" cy={marmotAnim === 'stretch' ? '76' : '80'} rx="16" ry={marmotAnim === 'stretch' ? '19' : '17'} fill="url(#marmotBellyGrad)" />
           </g>
 
-          {/* Sparkly Button Eyes with Yawning / Normal State */}
-          {marmotAnim === 'yawn' ? (
-            <g stroke="#18181b" strokeWidth="2" strokeLinecap="round" fill="none">
-              {/* Happy squinting closed eyes during yawn */}
-              <path d="M57 42 Q60 39 63 42" />
-              <path d="M77 42 Q80 39 83 42" />
-              {/* Tiny tear of sleepy joy */}
-              <circle cx="85" cy="45" r="1.2" fill="#38bdf8" />
+          {/* Marmot Head & Expressive Features */}
+          <g className={marmotAnim === 'idle' ? 'animate-marmot-head' : ''}>
+            {/* Marmot Head Base */}
+            <ellipse cx="70" cy={marmotAnim === 'stretch' ? '41' : '46'} rx="20" ry="18" fill="url(#marmotFurGrad)" />
+
+            {/* Round Furry Ears with Pink Centers & Independent Twitches */}
+            {/* Left Ear */}
+            <g className={marmotAnim === 'idle' ? 'animate-marmot-ear-left' : ''}>
+              <ellipse
+                cx="54"
+                cy={marmotAnim === 'stretch' ? '28' : '33'}
+                rx="5.5"
+                ry="6"
+                fill="#78350f"
+                className="group-hover:rotate-12 origin-bottom transition-transform"
+              />
+              <ellipse cx="54" cy={marmotAnim === 'stretch' ? '28' : '33'} rx="3.5" ry="4" fill="#fbcfe8" />
             </g>
-          ) : (
-            <g className="animate-eye-blink">
-              <circle cx="60" cy={marmotAnim === 'stretch' ? '37' : '42'} r="3.2" fill="#18181b" />
-              <circle cx="59" cy={marmotAnim === 'stretch' ? '35.8' : '40.8'} r="1.1" fill="#ffffff" />
-              <circle cx="61.2" cy={marmotAnim === 'stretch' ? '37.5' : '42.5'} r="0.5" fill="#ffffff" />
-              <circle cx="80" cy={marmotAnim === 'stretch' ? '37' : '42'} r="3.2" fill="#18181b" />
-              <circle cx="79" cy={marmotAnim === 'stretch' ? '35.8' : '40.8'} r="1.1" fill="#ffffff" />
-              <circle cx="81.2" cy={marmotAnim === 'stretch' ? '37.5' : '42.5'} r="0.5" fill="#ffffff" />
+
+            {/* Right Ear */}
+            <g className={marmotAnim === 'idle' ? 'animate-marmot-ear-right' : ''}>
+              <ellipse
+                cx="86"
+                cy={marmotAnim === 'stretch' ? '28' : '33'}
+                rx="5.5"
+                ry="6"
+                fill="#78350f"
+                className="group-hover:-rotate-12 origin-bottom transition-transform"
+              />
+              <ellipse cx="86" cy={marmotAnim === 'stretch' ? '28' : '33'} rx="3.5" ry="4" fill="#fbcfe8" />
             </g>
-          )}
+
+            {/* Creamy Snout & Muzzle */}
+            <ellipse cx="70" cy={marmotAnim === 'stretch' ? '47' : '52'} rx="11" ry="8" fill="url(#marmotBellyGrad)" />
+
+            {/* Twitchy Sniffing Black Nose & Whiskers */}
+            <g className={marmotAnim === 'idle' ? 'animate-marmot-sniff' : ''}>
+              <ellipse cx="70" cy={marmotAnim === 'stretch' ? '43' : '48'} rx="3" ry="2.2" fill="#18181b" />
+
+              {/* Whiskers */}
+              <g stroke="#92400e" strokeWidth="0.8" opacity="0.7">
+                <line x1="56" y1={marmotAnim === 'stretch' ? '44' : '49'} x2="44" y2={marmotAnim === 'stretch' ? '42' : '47'} />
+                <line x1="56" y1={marmotAnim === 'stretch' ? '47' : '52'} x2="43" y2={marmotAnim === 'stretch' ? '48' : '53'} />
+                <line x1="84" y1={marmotAnim === 'stretch' ? '44' : '49'} x2="96" y2={marmotAnim === 'stretch' ? '42' : '47'} />
+                <line x1="84" y1={marmotAnim === 'stretch' ? '47' : '52'} x2="97" y2={marmotAnim === 'stretch' ? '48' : '53'} />
+              </g>
+            </g>
+
+            {/* Marmot Mouth - Custom Yawn vs Snacking vs Normal */}
+            {marmotAnim === 'yawn' ? (
+              <g>
+                {/* Wide Yawning Mouth */}
+                <ellipse cx="70" cy="55" rx="6" ry="7" fill="#881337" stroke="#78350f" strokeWidth="1" />
+                {/* Little pink tongue */}
+                <ellipse cx="70" cy="58" rx="3.5" ry="2.5" fill="#fb7185" />
+                {/* Tiny upper buck teeth */}
+                <rect x="68" y="48.5" width="4" height="2" rx="0.5" fill="#ffffff" />
+              </g>
+            ) : marmotAnim === 'snack' ? (
+              <g>
+                {/* Chewing little mouth */}
+                <ellipse cx="70" cy="53" rx="4" ry="2.5" fill="#881337" className="animate-ping" />
+                <circle cx="70" cy="56" r="2.5" fill="#92400e" stroke="#451a03" strokeWidth="0.5" />
+              </g>
+            ) : (
+              <g>
+                <path d="M66 53 Q70 56 74 53" stroke="#78350f" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                <rect x="68" y="53" width="4" height="3" rx="1" fill="#ffffff" stroke="#78350f" strokeWidth="0.5" />
+              </g>
+            )}
+
+            {/* Rosy Cheeks */}
+            <ellipse cx="57" cy={marmotAnim === 'stretch' ? '45' : '50'} rx="3.5" ry="2" fill="#f43f5e" opacity="0.45" />
+            <ellipse cx="83" cy={marmotAnim === 'stretch' ? '45' : '50'} rx="3.5" ry="2" fill="#f43f5e" opacity="0.45" />
+
+            {/* Sparkly Button Eyes with Natural Blinking and Cursor Gaze Tracking */}
+            {marmotAnim === 'yawn' ? (
+              <g stroke="#18181b" strokeWidth="2" strokeLinecap="round" fill="none">
+                {/* Happy squinting closed eyes during yawn */}
+                <path d="M57 42 Q60 39 63 42" />
+                <path d="M77 42 Q80 39 83 42" />
+                {/* Tiny tear of sleepy joy */}
+                <circle cx="85" cy="45" r="1.2" fill="#38bdf8" />
+              </g>
+            ) : (
+              <g className="animate-eye-blink">
+                <g style={{ transform: `translate(${eyeOffset.x}px, ${eyeOffset.y}px)`, transition: 'transform 0.1s ease-out' }}>
+                  <circle cx="60" cy={marmotAnim === 'stretch' ? '37' : '42'} r="3.2" fill="#18181b" />
+                  <circle cx="59" cy={marmotAnim === 'stretch' ? '35.8' : '40.8'} r="1.1" fill="#ffffff" />
+                  <circle cx="61.2" cy={marmotAnim === 'stretch' ? '37.5' : '42.5'} r="0.5" fill="#ffffff" />
+                  <circle cx="80" cy={marmotAnim === 'stretch' ? '37' : '42'} r="3.2" fill="#18181b" />
+                  <circle cx="79" cy={marmotAnim === 'stretch' ? '35.8' : '40.8'} r="1.1" fill="#ffffff" />
+                  <circle cx="81.2" cy={marmotAnim === 'stretch' ? '37.5' : '42.5'} r="0.5" fill="#ffffff" />
+                </g>
+              </g>
+            )}
+          </g>
 
           {/* Paws - Stretching Up vs Holding Flower */}
           {marmotAnim === 'stretch' ? (
@@ -720,9 +764,9 @@ export const MarmotCompanion: React.FC<MarmotCompanionProps> = ({ language }) =>
             </g>
           )}
 
-          {/* Glowing Sun Dandelion Flower */}
+          {/* Glowing Sun Dandelion Flower (Gentle organic swaying) */}
           {marmotAnim !== 'stretch' && (
-            <g transform="translate(70, 71)">
+            <g className={marmotAnim === 'idle' ? 'animate-marmot-flower' : ''} transform="translate(70, 71)">
               <line x1="0" y1="0" x2="0" y2="12" stroke="#16a34a" strokeWidth="1.5" strokeLinecap="round" />
               <circle cx="0" cy="0" r="5" fill="#fef08a" opacity="0.6" className="animate-pulse" />
               <circle cx="0" cy="0" r="3.5" fill="#fbbf24" />

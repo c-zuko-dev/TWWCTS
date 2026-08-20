@@ -14,7 +14,7 @@ interface WeatherOverlayProps {
 interface InteractiveBurst {
   x: number;
   y: number;
-  type: 'raindrop' | 'sun_mote' | 'wind_leaf' | 'stardust';
+  type: 'raindrop' | 'sun_mote' | 'wind_leaf' | 'stardust' | 'heart_burst';
   life: number;
   maxLife: number;
   radius: number;
@@ -27,6 +27,7 @@ interface InteractiveBurst {
     alpha: number;
     size: number;
     color: string;
+    isHeart?: boolean;
   }>;
 }
 
@@ -236,6 +237,38 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
       setInteractionToast(language === 'en' ? '🍃 Breeze & Petal Whirl!' : '🍃 Tourbillon de Pétales !');
     }
 
+    // Additional Heart Burst during Heartwarming Scenes
+    if (isHeartwarming) {
+      audioSynth.playSoundEffect('magic_sparkle');
+      const heartBurstParticles = Array.from({ length: 9 }, () => {
+        const angle = Math.random() * Math.PI * 2;
+        const spd = Math.random() * 3.2 + 1.2;
+        return {
+          x: clientX,
+          y: clientY,
+          vx: Math.cos(angle) * spd,
+          vy: Math.sin(angle) * spd - 0.8,
+          alpha: 0.95,
+          size: Math.random() * 5 + 4,
+          color: Math.random() > 0.4 ? 'rgba(251, 191, 36, ' : 'rgba(244, 114, 182, ',
+          isHeart: true,
+        };
+      });
+
+      interactiveBurstsRef.current.push({
+        x: clientX,
+        y: clientY,
+        type: 'heart_burst',
+        life: 0,
+        maxLife: 0.85,
+        radius: 16,
+        color: '#fbbf24',
+        particles: heartBurstParticles,
+      });
+
+      setInteractionToast(language === 'en' ? '💛 Heartwarming Warmth!' : '💛 Douceur du Cœur !');
+    }
+
     setTimeout(() => {
       setInteractionToast(null);
     }, 1000);
@@ -386,27 +419,28 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
       color: Math.random() > 0.4 ? '#fef08a' : Math.random() > 0.5 ? '#fde047' : '#fbbf24',
       isStar: Math.random() > 0.6,
     }));
-    floatingLightMotesRef.current = floatingLightMotes;
-
-    // 6. Initialize Floating Golden Heart Particles specifically for Heartwarming Scenes
-    const heartColors = ['#fde047', '#fbbf24', '#f59e0b', '#f472b6', '#fbcfe8', '#fef08a'];
-    const floatingHearts = isHeartwarming
-      ? Array.from({ length: 22 }, () => ({
-          x: Math.random() * width,
-          y: Math.random() * height,
-          vy: -(Math.random() * 0.55 + 0.3), // gentle slow upward drift
-          size: Math.random() * 6 + 5.5,
-          alpha: Math.random() * 0.4 + 0.4,
-          alphaSpeed: (Math.random() * 0.012 + 0.006) * (Math.random() > 0.5 ? 1 : -1),
-          maxAlpha: 0.85,
-          minAlpha: 0.2,
-          rotation: (Math.random() - 0.5) * 0.4,
-          rotSpeed: (Math.random() - 0.5) * 0.008,
-          swayPhase: Math.random() * Math.PI * 2,
-          swaySpeed: Math.random() * 0.03 + 0.015,
-          color: heartColors[Math.floor(Math.random() * heartColors.length)],
-        }))
-      : [];
+    // 6. Initialize Floating Heart-Shaped Particles for Heartwarming Scenes
+    const heartCount = isHeartwarming ? 18 : 0;
+    const floatingHearts = Array.from({ length: heartCount }, () => ({
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vy: -(Math.random() * 0.45 + 0.3), // gentle upward drift
+      vx: (Math.random() - 0.5) * 0.25,
+      size: Math.random() * 6 + 5, // heart radius
+      alpha: Math.random() * 0.45 + 0.35,
+      alphaSpeed: (Math.random() * 0.012 + 0.006) * (Math.random() > 0.5 ? 1 : -1),
+      maxAlpha: 0.85,
+      minAlpha: 0.2,
+      pulsePhase: Math.random() * Math.PI * 2,
+      rotation: (Math.random() - 0.5) * 0.3,
+      color:
+        Math.random() > 0.4
+          ? '#fbbf24' // soft gold
+          : Math.random() > 0.5
+          ? '#f472b6' // rose
+          : '#fde047', // bright gold
+      glowColor: Math.random() > 0.5 ? '#f59e0b' : '#ec4899',
+    }));
     floatingHeartsRef.current = floatingHearts;
 
     let time = 0;
@@ -478,15 +512,14 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
         ctx.restore();
       }
 
-      // ====================================================================
-      // 0B. FLOATING HEART PARTICLES (For Heartwarming Scenes - Golden Glow)
-      // ====================================================================
+      // ====================================================
+      // 0b. FLOATING HEART PARTICLES (Heartwarming Scenes)
+      // ====================================================
       if (isHeartwarming && floatingHearts.length > 0) {
         for (let i = 0; i < floatingHearts.length; i++) {
           const h = floatingHearts[i];
           h.y += h.vy;
-          h.x += Math.sin(time * 1.8 + h.swayPhase) * 0.45;
-          h.rotation += h.rotSpeed;
+          h.x += h.vx + Math.sin(time * 1.8 + h.pulsePhase) * 0.55;
           h.alpha += h.alphaSpeed;
 
           if (h.alpha >= h.maxAlpha) {
@@ -497,40 +530,37 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
             h.alphaSpeed = Math.abs(h.alphaSpeed);
           }
 
-          // Loop back from bottom
-          if (h.y < -30) {
+          // Loop back from bottom when reaching the top
+          if (h.y < -25) {
             h.y = height + 20;
             h.x = Math.random() * width;
           }
-          if (h.x < -20) h.x = width + 20;
-          if (h.x > width + 20) h.x = -20;
+          if (h.x < -15) h.x = width + 15;
+          if (h.x > width + 15) h.x = -15;
 
           ctx.save();
           ctx.globalAlpha = Math.max(0, Math.min(1, h.alpha));
-          ctx.translate(h.x, h.y);
-          ctx.rotate(h.rotation);
-
-          const scale = h.size / 10;
-          ctx.scale(scale, scale);
-
-          // Draw bezier heart
-          ctx.beginPath();
-          ctx.moveTo(0, 0);
-          ctx.bezierCurveTo(-5, -6, -10, -2, -10, 3);
-          ctx.bezierCurveTo(-10, 8, -4, 12, 0, 15);
-          ctx.bezierCurveTo(4, 12, 10, 8, 10, 3);
-          ctx.bezierCurveTo(10, -2, 5, -6, 0, 0);
-          ctx.closePath();
-
           ctx.fillStyle = h.color;
-          ctx.shadowColor = '#fbbf24';
+          ctx.shadowColor = h.glowColor;
           ctx.shadowBlur = 12;
+
+          ctx.translate(h.x, h.y);
+          ctx.rotate(h.rotation + Math.sin(time + h.pulsePhase) * 0.15);
+
+          // Draw floating heart shape
+          const s = h.size;
+          ctx.beginPath();
+          ctx.moveTo(0, s * 0.3);
+          ctx.bezierCurveTo(0, -s * 0.2, -s, -s * 0.2, -s, s * 0.3);
+          ctx.bezierCurveTo(-s, s * 0.8, 0, s * 1.2, 0, s * 1.5);
+          ctx.bezierCurveTo(0, s * 1.2, s, s * 0.8, s, s * 0.3);
+          ctx.bezierCurveTo(s, -s * 0.2, 0, -s * 0.2, 0, s * 0.3);
           ctx.fill();
 
-          // Golden inner shine
+          // Soft highlight glint
           ctx.beginPath();
-          ctx.arc(-2.5, 2, 2, 0, Math.PI * 2);
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+          ctx.arc(-s * 0.35, s * 0.25, s * 0.22, 0, Math.PI * 2);
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.75)';
           ctx.fill();
 
           ctx.restore();
@@ -788,6 +818,23 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
           ctx.fillStyle = `rgba(255, 255, 255, ${alpha})`;
           ctx.fill();
           ctx.restore();
+        } else if (b.type === 'heart_burst') {
+          ctx.save();
+          ctx.translate(b.x, b.y);
+          ctx.rotate(progress * Math.PI * 0.4);
+          const s = b.radius + progress * 24;
+          ctx.fillStyle = `rgba(251, 191, 36, ${alpha * 0.75})`;
+          ctx.shadowBlur = 18;
+          ctx.shadowColor = '#f59e0b';
+
+          ctx.beginPath();
+          ctx.moveTo(0, s * 0.3);
+          ctx.bezierCurveTo(0, -s * 0.2, -s, -s * 0.2, -s, s * 0.3);
+          ctx.bezierCurveTo(-s, s * 0.8, 0, s * 1.2, 0, s * 1.5);
+          ctx.bezierCurveTo(0, s * 1.2, s, s * 0.8, s, s * 0.3);
+          ctx.bezierCurveTo(s, -s * 0.2, 0, -s * 0.2, 0, s * 0.3);
+          ctx.fill();
+          ctx.restore();
         }
 
         if (b.particles) {
@@ -797,13 +844,27 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
             p.y += p.vy;
             p.alpha = Math.max(0, p.alpha - 0.025);
 
-            ctx.beginPath();
-            ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+            ctx.save();
             ctx.fillStyle = `${p.color}${p.alpha})`;
-            ctx.shadowBlur = 6;
-            ctx.shadowColor = p.color.includes('232') ? '#c084fc' : '#fbbf24';
-            ctx.fill();
-            ctx.shadowBlur = 0;
+            ctx.shadowBlur = 8;
+            ctx.shadowColor = p.color.includes('244') ? '#ec4899' : '#fbbf24';
+
+            if (p.isHeart) {
+              ctx.translate(p.x, p.y);
+              const hs = p.size;
+              ctx.beginPath();
+              ctx.moveTo(0, hs * 0.3);
+              ctx.bezierCurveTo(0, -hs * 0.2, -hs, -hs * 0.2, -hs, hs * 0.3);
+              ctx.bezierCurveTo(-hs, hs * 0.8, 0, hs * 1.2, 0, hs * 1.5);
+              ctx.bezierCurveTo(0, hs * 1.2, hs, hs * 0.8, hs, hs * 0.3);
+              ctx.bezierCurveTo(hs, -hs * 0.2, 0, -hs * 0.2, 0, hs * 0.3);
+              ctx.fill();
+            } else {
+              ctx.beginPath();
+              ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+              ctx.fill();
+            }
+            ctx.restore();
           }
         }
       }
@@ -817,7 +878,7 @@ export const WeatherOverlay: React.FC<WeatherOverlayProps> = ({
       window.removeEventListener('resize', handleResize);
       cancelAnimationFrame(animationFrameId);
     };
-  }, [activeWeather, location, collectedLightsCount, isHeartwarming]);
+  }, [activeWeather, location, collectedLightsCount]);
 
   return (
     <div

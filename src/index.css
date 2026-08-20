@@ -358,7 +358,133 @@
 }
 
 .animate-purple-heart-3 {
-  animation: purpleHeartFloat 2.8s ease-out infinite 1.6s;
+  animation: purpleHeartFloat 3.2s ease-out infinite 1.5s;
+}
+
+/* Marmot Companion Living Animations */
+@keyframes marmotBreathe {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  50% {
+    transform: scale(1.025, 0.985) translateY(-1.2px);
+  }
+}
+
+.animate-marmot-breathe {
+  transform-origin: 70px 90px;
+  animation: marmotBreathe 3.4s ease-in-out infinite;
+}
+
+@keyframes marmotTailWag {
+  0%, 100% {
+    transform: rotate(-20deg);
+  }
+  30% {
+    transform: rotate(-10deg) translateY(1px);
+  }
+  60% {
+    transform: rotate(-26deg) translateY(-1px);
+  }
+}
+
+.animate-marmot-tail {
+  transform-origin: 38px 85px;
+  animation: marmotTailWag 4.2s ease-in-out infinite;
+}
+
+@keyframes marmotEarTwitchL {
+  0%, 86%, 100% {
+    transform: rotate(0deg);
+  }
+  89% {
+    transform: rotate(-12deg) translateY(-1px);
+  }
+  93% {
+    transform: rotate(6deg);
+  }
+  96% {
+    transform: rotate(-3deg);
+  }
+}
+
+.animate-marmot-ear-left {
+  transform-origin: 54px 33px;
+  animation: marmotEarTwitchL 5.5s ease-in-out infinite;
+}
+
+@keyframes marmotEarTwitchR {
+  0%, 82%, 100% {
+    transform: rotate(0deg);
+  }
+  85% {
+    transform: rotate(14deg) translateY(-1px);
+  }
+  88% {
+    transform: rotate(-5deg);
+  }
+  91% {
+    transform: rotate(3deg);
+  }
+}
+
+.animate-marmot-ear-right {
+  transform-origin: 86px 33px;
+  animation: marmotEarTwitchR 6.2s ease-in-out infinite 1.8s;
+}
+
+@keyframes marmotNoseSniff {
+  0%, 75%, 100% {
+    transform: scale(1) translateY(0);
+  }
+  78% {
+    transform: scale(1.15, 0.88) translateY(-0.8px);
+  }
+  82% {
+    transform: scale(0.92, 1.08) translateY(0.3px);
+  }
+  86% {
+    transform: scale(1.1, 0.95) translateY(-0.4px);
+  }
+}
+
+.animate-marmot-sniff {
+  transform-origin: 70px 48px;
+  animation: marmotNoseSniff 4.8s ease-in-out infinite;
+}
+
+@keyframes marmotHeadTilt {
+  0%, 70%, 100% {
+    transform: rotate(0deg);
+  }
+  74% {
+    transform: rotate(-3.5deg) translateY(-0.5px);
+  }
+  88% {
+    transform: rotate(-3.5deg) translateY(-0.5px);
+  }
+  92% {
+    transform: rotate(1.5deg);
+  }
+}
+
+.animate-marmot-head {
+  transform-origin: 70px 60px;
+  animation: marmotHeadTilt 7s ease-in-out infinite;
+}
+
+@keyframes marmotFlowerSway {
+  0%, 100% {
+    transform: translate(70px, 71px) rotate(0deg);
+  }
+  50% {
+    transform: translate(70px, 71px) rotate(8deg) translateY(-1px);
+  }
+}
+
+.animate-marmot-flower {
+  transform-origin: 0px 12px;
+  animation: marmotFlowerSway 3.6s ease-in-out infinite;
 }
 
 /* Abyss Mist Swirling */
@@ -522,31 +648,6 @@
   animation: waitingBreath 2.4s ease-in-out infinite;
 }
 
-/* Subtle Ken Burns Slow Camera Panning & Breathing Animation */
-@keyframes kenBurnsSlow {
-  0% {
-    transform: scale(1.03) translate(0%, 0%);
-  }
-  25% {
-    transform: scale(1.065) translate(-1.2%, -0.9%);
-  }
-  50% {
-    transform: scale(1.045) translate(1.1%, -1.4%);
-  }
-  75% {
-    transform: scale(1.07) translate(-0.8%, 1.1%);
-  }
-  100% {
-    transform: scale(1.03) translate(0%, 0%);
-  }
-}
-
-.animate-ken-burns {
-  animation: kenBurnsSlow 46s ease-in-out infinite alternate;
-  transform-origin: center center;
-  will-change: transform;
-}
-
 /* Character Gentle Breathe Animation (Idle & Moments of Silence) */
 @keyframes characterBreathe {
   0%, 100% {
@@ -577,6 +678,114 @@
 
 .animate-warm-glow-pulse {
   animation: warmGoldenGlowPulse 4s ease-in-out infinite;
+}
+
+/* Storybook Golden Magic Ink Text Reveal Animations */
+@keyframes magicInkFadeGlow {
+  0% {
+    opacity: 0;
+    color: #fef08a;
+    text-shadow: 0 0 14px rgba(251, 191, 36, 0.9), 0 0 24px rgba(245, 158, 11, 0.7);
+    filter: brightness(1.6);
+    transform: translateY(2px) scale(0.99);
+  }
+  30% {
+    opacity: 1;
+    color: #f59e0b;
+    text-shadow: 0 0 10px rgba(251, 191, 36, 0.8), 0 0 18px rgba(217, 119, 6, 0.5);
+    filter: brightness(1.3);
+    transform: translateY(0) scale(1);
+  }
+  70% {
+    color: #78350f;
+    text-shadow: 0 0 5px rgba(245, 158, 11, 0.4);
+    filter: brightness(1.05);
+  }
+  100% {
+    opacity: 1;
+    color: inherit;
+    text-shadow: none;
+    filter: brightness(1);
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-magic-ink-reveal {
+  animation: magicInkFadeGlow 1.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: color, opacity, text-shadow, filter;
+}
+
+@keyframes magicInkHeadingReveal {
+  0% {
+    opacity: 0;
+    color: #fef08a;
+    text-shadow: 0 0 20px rgba(251, 191, 36, 1), 0 0 35px rgba(245, 158, 11, 0.85);
+    transform: scale(0.97) translateY(-3px);
+  }
+  40% {
+    opacity: 1;
+    color: #d97706;
+    text-shadow: 0 0 12px rgba(251, 191, 36, 0.7);
+    transform: scale(1.01) translateY(0);
+  }
+  100% {
+    opacity: 1;
+    color: #451a03;
+    text-shadow: 0 1px 3px rgba(245, 158, 11, 0.2);
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-magic-ink-heading {
+  animation: magicInkHeadingReveal 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes dropCapGlow {
+  0% {
+    opacity: 0;
+    transform: scale(0.7) rotate(-5deg);
+    color: #fef08a;
+    box-shadow: 0 0 25px rgba(251, 191, 36, 1);
+  }
+  45% {
+    opacity: 1;
+    transform: scale(1.1) rotate(2deg);
+    color: #b45309;
+    box-shadow: 0 0 15px rgba(245, 158, 11, 0.6);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(0deg);
+    color: #78350f;
+    box-shadow: 0 2px 8px rgba(120, 53, 15, 0.25);
+  }
+}
+
+.animate-drop-cap {
+  animation: dropCapGlow 1.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes goldenQuillSparkle {
+  0% {
+    opacity: 0;
+    transform: scale(0) rotate(0deg);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1.3) rotate(45deg);
+  }
+  80% {
+    opacity: 0.8;
+    transform: scale(1) rotate(90deg);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0) rotate(135deg);
+  }
+}
+
+.animate-golden-sparkle {
+  animation: goldenQuillSparkle 1.4s ease-out forwards;
 }
 
 /* Super Witch Spell Choice Animation */
@@ -1500,6 +1709,198 @@
 
 .animate-starlight-bloom {
   animation: starlightBloomPulse 900ms ease-out forwards;
+}
+
+/* Subtle Ken-Burns Slow Camera Panning Animation */
+@keyframes kenBurnsPan {
+  0% {
+    transform: scale(1.02) translate(0%, 0%);
+  }
+  25% {
+    transform: scale(1.045) translate(-0.75%, -0.45%);
+  }
+  50% {
+    transform: scale(1.035) translate(0.65%, -0.75%);
+  }
+  75% {
+    transform: scale(1.05) translate(-0.45%, 0.4%);
+  }
+  100% {
+    transform: scale(1.02) translate(0%, 0%);
+  }
+}
+
+.animate-ken-burns {
+  animation: kenBurnsPan 36s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Super Witch Wand Gentle Idle Sway */
+@keyframes wandIdleSwayAnim {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  30% {
+    transform: rotate(2.4deg) translateY(-1px);
+  }
+  65% {
+    transform: rotate(-1.9deg) translateY(0.5px);
+  }
+}
+
+.animate-wand-idle-sway {
+  transform-origin: 96px 236px;
+  animation: wandIdleSwayAnim 5.2s ease-in-out infinite;
+}
+
+/* Character Living Breathing Animations */
+@keyframes characterLivingBreathe {
+  0%, 100% {
+    transform: scale(1, 1) translateY(0);
+  }
+  50% {
+    transform: scale(1.008, 1.018) translateY(-2.5px);
+  }
+}
+
+.animate-character-breathe {
+  transform-origin: bottom center;
+  animation: characterLivingBreathe 4.6s ease-in-out infinite;
+}
+
+/* Orik Sprite Leaf & Heartwood Breathing */
+@keyframes orikBreatheAnim {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-4px) scale(1.015, 1.02);
+  }
+}
+
+.animate-orik-breathe {
+  transform-origin: bottom center;
+  animation: orikBreatheAnim 3.8s ease-in-out infinite;
+}
+
+/* Vivienne Hearth & Scarf Living Breath */
+@keyframes artisanBreatheAnim {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-2px) scale(1.01);
+  }
+}
+
+.animate-artisan-breathe {
+  transform-origin: bottom center;
+  animation: artisanBreatheAnim 4.8s ease-in-out infinite;
+}
+
+/* Lezar Shadow Cat Breathing & Tail Undulation */
+@keyframes lezarBreatheAnim {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.012, 1.022);
+  }
+}
+
+.animate-lezar-breathe {
+  transform-origin: bottom center;
+  animation: lezarBreatheAnim 4.2s ease-in-out infinite;
+}
+
+/* Hypo Celestial Breathing & Flotation */
+@keyframes hypoBreatheAnim {
+  0%, 100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-3.5px) scale(1.015);
+  }
+}
+
+.animate-hypo-breathe {
+  transform-origin: bottom center;
+  animation: hypoBreatheAnim 4.4s ease-in-out infinite;
+}
+
+/* Mélo Clown Whimsical Living Float */
+@keyframes clownBreatheAnim {
+  0%, 100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-4.5px) rotate(0.8deg);
+  }
+}
+
+.animate-clown-breathe {
+  transform-origin: bottom center;
+  animation: clownBreatheAnim 4s ease-in-out infinite;
+}
+
+/* Organic Environment Shadow Breathing (Forest & Abyss) */
+@keyframes shadowBreathingAnim {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.85;
+  }
+  50% {
+    transform: scale(1.035, 1.022);
+    opacity: 0.98;
+  }
+}
+
+.animate-forest-shadow-breathe {
+  transform-origin: bottom center;
+  animation: shadowBreathingAnim 8s ease-in-out infinite;
+}
+
+.animate-abyss-shadow-breathe {
+  transform-origin: center bottom;
+  animation: shadowBreathingAnim 6.5s ease-in-out infinite;
+}
+
+/* Light Meter Fill Wave Shimmer & Sparkle */
+@keyframes meterFillGlint {
+  0% {
+    transform: translateX(-100%) skewX(-20deg);
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  100% {
+    transform: translateX(220%) skewX(-20deg);
+    opacity: 0;
+  }
+}
+
+.animate-meter-glint {
+  animation: meterFillGlint 1.4s ease-out forwards;
+}
+
+@keyframes meterSparkleBurst {
+  0% {
+    transform: scale(0.4) rotate(0deg);
+    opacity: 0;
+  }
+  40% {
+    transform: scale(1.3) rotate(45deg);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1) rotate(90deg);
+    opacity: 0;
+  }
+}
+
+.animate-meter-sparkle {
+  animation: meterSparkleBurst 1.2s ease-out forwards;
 }
 
 

@@ -1515,17 +1515,4 @@ export const STORY_DATA: Record<string, DialogueLine> = {
     },
     nextSceneId: 'epilogue_screen',
   },
-  epilogue_screen: {
-    id: 'epilogue_screen',
-    speaker: 'narrator',
-    speakerName: { en: 'The Chronicle', fr: 'La Chronique' },
-    location: 'birthday_feast',
-    chapterTitle: { en: 'EPILOGUE', fr: 'ÉPILOGUE' },
-    chapterSubtitle: { en: 'The Eternal Feast of Light', fr: 'Le Festin Éternel de Lumière' },
-    isChapterStart: false,
-    text: {
-      en: 'Happy Birthday, Wendy! May your journey forward shine bright with love, companionship, and shared warmth.',
-      fr: 'Joyeux Anniversaire, Wendy ! Que ta route soit toujours illuminée d’amour, de tendre compagnie et de chaleur partagée.',
-    },
-  },
 };

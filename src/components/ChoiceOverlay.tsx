@@ -1,7 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Sparkles, CheckCircle2, Wand2 } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, CheckCircle2 } from 'lucide-react';
 import { ChoiceOption, Language } from '../types';
-import { MagicWandTrail } from './MagicWandTrail';
 
 interface ChoiceOverlayProps {
   choices: ChoiceOption[];
@@ -10,7 +9,6 @@ interface ChoiceOverlayProps {
 }
 
 export const ChoiceOverlay: React.FC<ChoiceOverlayProps> = ({ choices, language, onSelectChoice }) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [hoverData, setHoverData] = useState<{ [key: string]: { x: number; y: number; active: boolean } }>({});
 
@@ -42,10 +40,7 @@ export const ChoiceOverlay: React.FC<ChoiceOverlayProps> = ({ choices, language,
   };
 
   return (
-    <div ref={containerRef} className="relative w-full max-w-2xl mx-auto px-4 mb-4 z-30 animate-fade-in">
-      {/* Super Witch Magical Wand Trail FX */}
-      <MagicWandTrail isActive={true} containerRef={containerRef} />
-
+    <div className="w-full max-w-2xl mx-auto px-4 mb-4 z-30 animate-fade-in">
       <div className="flex flex-col gap-3">
         {choices.map((choice, index) => {
           const choiceText = choice.text[language] || choice.text.en;
