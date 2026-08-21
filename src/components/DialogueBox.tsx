@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ChevronRight, ChevronLeft, Volume2, VolumeX, History, Play, Pause, Globe, Sparkles } from 'lucide-react';
-import { CharacterExpression, CharacterId, DialogueText, Language } from '../types';
+import { ChevronRight, ChevronLeft, Volume2, VolumeX, History, Play, Pause, Globe, Sparkles, Wind } from 'lucide-react';
+import { CharacterExpression, CharacterId, DialogueText, Language, SceneLocation } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
 interface DialogueBoxProps {
@@ -9,6 +9,7 @@ interface DialogueBoxProps {
   expression?: CharacterExpression;
   text: DialogueText;
   language: Language;
+  location?: SceneLocation;
   onAdvance: () => void;
   onPrevious?: () => void;
   canGoBack?: boolean;
@@ -27,6 +28,7 @@ export const DialogueBox: React.FC<DialogueBoxProps> = ({
   expression,
   text,
   language,
+  location,
   onAdvance,
   onPrevious,
   canGoBack = false,
@@ -41,6 +43,13 @@ export const DialogueBox: React.FC<DialogueBoxProps> = ({
   const fullText = text[language] || text.en;
   const [displayedText, setDisplayedText] = useState('');
   const [isTyping, setIsTyping] = useState(true);
+
+  // Check if dialogue takes place in an echoic environment (Forest or Abyss) or is a poignant memory/flashback
+  const isMemoryEchoScene =
+    location === 'whispering_forest' ||
+    location === 'velvet_abyss' ||
+    expression === 'thoughtful' ||
+    /remember|past|souvenir|autrefois|jadis|memory|ago|echo|forgotten|longtemps|void|shadow|forest|abyss|solitude|alone/i.test(fullText);
 
   useEffect(() => {
     setDisplayedText('');
@@ -67,9 +76,9 @@ export const DialogueBox: React.FC<DialogueBoxProps> = ({
         const nextChar = fullText[currentIndex];
         setDisplayedText(fullText.slice(0, currentIndex + 1));
 
-        // Typewriter character voice sound effect with unique pitch per speaker
+        // Typewriter character voice sound effect with unique pitch per speaker and nostalgic echo reverb in forest/abyss memories
         if (currentIndex % 2 === 0 || nextChar === '!' || nextChar === '?' || nextChar === '…') {
-          audioSynth.playTypewriterVoice(speaker, nextChar);
+          audioSynth.playTypewriterVoice(speaker, nextChar, isMemoryEchoScene);
         }
 
         currentIndex++;
@@ -98,7 +107,7 @@ export const DialogueBox: React.FC<DialogueBoxProps> = ({
       if (timeoutId) window.clearTimeout(timeoutId);
       audioSynth.setDialogueSpeaking(false);
     };
-  }, [fullText, speaker, expression]);
+  }, [fullText, speaker, expression, isMemoryEchoScene]);
 
   const handleClickBox = (e: React.MouseEvent) => {
     // Prevent event bubbling if clicking controls

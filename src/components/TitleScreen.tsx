@@ -1,6 +1,6 @@
 import React from 'react';
-import { Sun, Play, BookOpen, Volume2, VolumeX, Globe, Sparkles, Heart, Smartphone, Monitor, ScrollText, Wind, Lock, Sparkle, Cloud, Star } from 'lucide-react';
-import { Language, ViewMode, CozyModeIntensity, SavedGamePreview, SceneLocation } from '../types';
+import { Sun, Play, BookOpen, Volume2, VolumeX, Globe, Sparkles, Heart, Monitor, ScrollText, Wind, Lock, Sparkle, Cloud, Star } from 'lucide-react';
+import { Language, CozyModeIntensity, SavedGamePreview, SceneLocation } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
 interface TitleScreenProps {
@@ -14,8 +14,6 @@ interface TitleScreenProps {
   onToggleLanguage: () => void;
   isMuted: boolean;
   onToggleAudio: () => void;
-  viewMode: ViewMode;
-  onSetViewMode: (mode: ViewMode) => void;
   savePreview?: SavedGamePreview | null;
   cozyMode?: CozyModeIntensity;
   onCycleCozyMode?: () => void;
@@ -34,8 +32,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   onToggleLanguage,
   isMuted,
   onToggleAudio,
-  viewMode,
-  onSetViewMode,
   savePreview,
   cozyMode = 'balanced',
   onCycleCozyMode,
@@ -45,6 +41,41 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const [showCozyLockedNotice, setShowCozyLockedNotice] = React.useState(false);
   const [isSunShining, setIsSunShining] = React.useState(false);
   const [sunFeedback, setSunFeedback] = React.useState<{ text: string; emoji: string } | null>(null);
+  const [parallaxOffset, setParallaxOffset] = React.useState({ x: 0, y: 0 });
+
+  // Smooth mouse-follow parallax effect for title screen atmospheric background layers
+  React.useEffect(() => {
+    let animId: number;
+    let targetX = 0;
+    let targetY = 0;
+    let currentX = 0;
+    let currentY = 0;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const cx = window.innerWidth / 2;
+      const cy = window.innerHeight / 2;
+      targetX = (e.clientX - cx) / cx;
+      targetY = (e.clientY - cy) / cy;
+    };
+
+    const loop = () => {
+      currentX += (targetX - currentX) * 0.05;
+      currentY += (targetY - currentY) * 0.05;
+      setParallaxOffset({
+        x: Math.round(currentX * 100) / 100,
+        y: Math.round(currentY * 100) / 100,
+      });
+      animId = requestAnimationFrame(loop);
+    };
+
+    window.addEventListener('mousemove', handleMouseMove, { passive: true });
+    animId = requestAnimationFrame(loop);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(animId);
+    };
+  }, []);
 
   const handleStart = () => {
     audioSynth.playSoundEffect('wind_breeze');
@@ -54,11 +85,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   const handleContinue = () => {
     audioSynth.playSoundEffect('page_turn');
     if (onContinueGame) onContinueGame();
-  };
-
-  const handleSelectMode = (mode: ViewMode) => {
-    audioSynth.playSoundEffect('click');
-    onSetViewMode(mode);
   };
 
   const handleCozyClick = () => {
@@ -182,7 +208,59 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
   };
 
   return (
-    <div className="relative min-h-screen w-full flex flex-col items-center justify-between p-6 sm:p-12 z-20 select-none">
+    <div className="relative min-h-screen w-full flex flex-col items-center justify-between p-6 sm:p-12 z-20 select-none overflow-hidden">
+      {/* Dynamic Mouse-Follow Parallax Atmospheric Depth Layers */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0">
+        {/* Layer 1: Deep Cosmic Star Cluster & Celestial Nebula */}
+        <div
+          className="absolute -inset-10 opacity-70 transition-transform duration-100 ease-out"
+          style={{
+            transform: `translate3d(${parallaxOffset.x * -6}px, ${parallaxOffset.y * -4}px, 0)`,
+          }}
+        >
+          {/* Twinkling Constellation Stars */}
+          <div className="absolute top-[12%] left-[18%] w-1.5 h-1.5 rounded-full bg-amber-200 animate-pulse" />
+          <div className="absolute top-[22%] right-[24%] w-2 h-2 rounded-full bg-yellow-100 animate-ping opacity-75" />
+          <div className="absolute top-[40%] left-[10%] w-1 h-1 rounded-full bg-amber-300 animate-pulse [animation-delay:400ms]" />
+          <div className="absolute top-[18%] left-[75%] w-1.5 h-1.5 rounded-full bg-amber-100 animate-pulse [animation-delay:800ms]" />
+          <div className="absolute top-[55%] right-[12%] w-1 h-1 rounded-full bg-amber-400" />
+          {/* Subtle Celestial Nebula Haze */}
+          <div className="absolute top-[15%] left-[30%] w-[38rem] h-[22rem] rounded-full bg-amber-500/5 blur-[100px]" />
+          <div className="absolute top-[35%] right-[20%] w-[30rem] h-[20rem] rounded-full bg-indigo-500/5 blur-[90px]" />
+        </div>
+
+        {/* Layer 2: Mid-Depth Twilight Mist & Floating Stardust Ribbons */}
+        <div
+          className="absolute -inset-10 opacity-80 transition-transform duration-150 ease-out"
+          style={{
+            transform: `translate3d(${parallaxOffset.x * -14}px, ${parallaxOffset.y * -9}px, 0)`,
+          }}
+        >
+          {/* Soft Ethereal Starlight Clouds */}
+          <div className="absolute top-[28%] left-[15%] flex items-center gap-2 opacity-25">
+            <Cloud className="w-16 h-16 text-amber-200 animate-pulse" />
+          </div>
+          <div className="absolute top-[32%] right-[18%] flex items-center gap-2 opacity-20">
+            <Cloud className="w-20 h-20 text-indigo-200 animate-pulse [animation-delay:1000ms]" />
+          </div>
+          {/* Floating Stardust Motes */}
+          <div className="absolute top-[45%] left-[22%] w-2 h-2 rounded-full bg-amber-300/60 blur-[1px] animate-bounce" />
+          <div className="absolute top-[60%] right-[25%] w-1.5 h-1.5 rounded-full bg-yellow-200/70 blur-[0.5px] animate-pulse" />
+        </div>
+
+        {/* Layer 3: Near-Depth Golden Fireflies & Whispering Wind Ripples */}
+        <div
+          className="absolute -inset-10 opacity-90 transition-transform duration-200 ease-out"
+          style={{
+            transform: `translate3d(${parallaxOffset.x * 12}px, ${parallaxOffset.y * 8}px, 0)`,
+          }}
+        >
+          <div className="absolute top-[68%] left-[12%] w-2.5 h-2.5 rounded-full bg-amber-400 shadow-[0_0_12px_#fbbf24] animate-pulse" />
+          <div className="absolute top-[72%] right-[14%] w-2 h-2 rounded-full bg-amber-300 shadow-[0_0_10px_#fde047] animate-pulse [animation-delay:600ms]" />
+          <div className="absolute top-[25%] left-[48%] w-1.5 h-1.5 rounded-full bg-yellow-100 shadow-[0_0_8px_#ffffff] animate-ping opacity-50" />
+        </div>
+      </div>
+
       {/* Sun Lantern Warmth Feedback Toast */}
       {sunFeedback && (
         <div className="fixed top-20 z-50 px-4 py-2 rounded-2xl bg-amber-950/95 border border-amber-400 text-amber-200 text-xs sm:text-sm font-serif shadow-2xl backdrop-blur-md animate-bounce flex items-center gap-2">
@@ -192,7 +270,12 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
       )}
 
       {/* Top Navbar */}
-      <div className="w-full max-w-5xl flex items-center justify-between flex-wrap gap-3">
+      <div
+        className="w-full max-w-5xl flex items-center justify-between flex-wrap gap-3 relative z-10 transition-transform duration-100"
+        style={{
+          transform: `translate3d(${parallaxOffset.x * 3}px, ${parallaxOffset.y * 2}px, 0)`,
+        }}
+      >
         <div className="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/60 backdrop-blur-md border border-amber-500/30 text-amber-200 text-xs font-serif">
           <Sparkles className="w-4 h-4 text-amber-400 animate-pulse" />
           <span>{language === 'en' ? 'A Cozy Magical Tale' : 'Un Conte Magique & Chaleureux'}</span>
@@ -242,37 +325,6 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             )}
           </div>
 
-          {/* Device View Mode Toggle (PC / Phone) */}
-          <div className="flex items-center p-0.5 rounded-full bg-slate-950/80 backdrop-blur-md border border-amber-500/30">
-            <button
-              id="title-btn-pc-mode"
-              onClick={() => handleSelectMode('pc')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif transition-all cursor-pointer ${
-                viewMode === 'pc'
-                  ? 'bg-amber-600 text-white font-semibold shadow-md'
-                  : 'text-amber-200/80 hover:text-white'
-              }`}
-              title={language === 'en' ? 'Switch to PC Mode' : 'Passer en Mode PC'}
-            >
-              <Monitor className="w-3.5 h-3.5" />
-              <span>{language === 'en' ? 'PC' : 'PC'}</span>
-            </button>
-
-            <button
-              id="title-btn-phone-mode"
-              onClick={() => handleSelectMode('phone')}
-              className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-serif transition-all cursor-pointer ${
-                viewMode === 'phone'
-                  ? 'bg-amber-600 text-white font-semibold shadow-md'
-                  : 'text-amber-200/80 hover:text-white'
-              }`}
-              title={language === 'en' ? 'Switch to Phone Mode' : 'Passer en Mode Mobile'}
-            >
-              <Smartphone className="w-3.5 h-3.5" />
-              <span>{language === 'en' ? 'Phone' : 'Mobile'}</span>
-            </button>
-          </div>
-
           {/* Language Switch */}
           <button
             id="title-btn-language"
@@ -307,11 +359,18 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
         </div>
       </div>
 
-      {/* Main Hero Section */}
-      <div className="flex flex-col items-center text-center max-w-3xl my-auto animate-fade-in">
+      {/* Main Hero Section with Responsive Parallax Drift */}
+      <div
+        className="flex flex-col items-center text-center max-w-3xl my-auto animate-fade-in relative z-10 transition-transform duration-150 ease-out"
+        style={{
+          transform: `translate3d(${parallaxOffset.x * 8}px, ${parallaxOffset.y * 6}px, 0)`,
+        }}
+      >
         {/* Animated Sun Lantern Visual with Radiant Burst on Click */}
         <div
-          className="relative mb-6 cursor-pointer group"
+          id="title-sun-lantern"
+          data-interactive="sun-lantern"
+          className="relative mb-6 cursor-pointer group select-none"
           onClick={handleSunClick}
           title={language === 'en' ? 'Click the Sun Lantern to make it shine!' : 'Clique sur la Lanterne Solaire pour la faire briller !'}
         >
@@ -343,26 +402,12 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
             : 'Un conte doux sur le partage de la chaleur, la marche avec d’étranges compagnons, et la découverte qu’on n’a jamais été fait pour porter le ciel tout seul.'}
         </p>
 
-        {/* Display Mode Selection Indicator Bar */}
-        <div className="flex items-center gap-2 mb-8 px-4 py-2 rounded-2xl bg-slate-950/60 border border-amber-500/20 text-xs font-serif text-amber-200/90">
-          <span>{language === 'en' ? 'Viewing Mode:' : 'Mode d’Affichage :'}</span>
-          <button
-            onClick={() => handleSelectMode('pc')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-              viewMode === 'pc' ? 'bg-amber-500/30 text-amber-200 font-bold border border-amber-400/50' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            💻 {language === 'en' ? 'PC (Widescreen)' : 'PC (Plein écran)'}
-          </button>
+        {/* Desktop Experience Badge */}
+        <div className="flex items-center gap-2 mb-8 px-4 py-1.5 rounded-full bg-slate-950/70 backdrop-blur-md border border-amber-500/25 text-xs font-serif text-amber-200/90 shadow-sm">
+          <Monitor className="w-3.5 h-3.5 text-amber-400" />
+          <span>{language === 'en' ? 'Desktop & Laptop Edition' : 'Édition pour Ordinateur'}</span>
           <span className="text-amber-500/40">•</span>
-          <button
-            onClick={() => handleSelectMode('phone')}
-            className={`px-2.5 py-1 rounded-lg transition-all cursor-pointer ${
-              viewMode === 'phone' ? 'bg-amber-500/30 text-amber-200 font-bold border border-amber-400/50' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            📱 {language === 'en' ? 'Phone Mode' : 'Mode Mobile'}
-          </button>
+          <span className="text-amber-300/80">{language === 'en' ? '60 FPS Ultra-Smooth' : '60 FPS Fluide'}</span>
         </div>
 
       {/* Action Buttons & Cute Companion Marmot */}

@@ -1,5 +1,4 @@
 export type Language = 'en' | 'fr';
-export type ViewMode = 'pc' | 'phone';
 export type CozyModeIntensity = 'minimal' | 'balanced' | 'lush';
 
 export interface SavedGamePreview {

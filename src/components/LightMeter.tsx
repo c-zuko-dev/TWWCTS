@@ -124,6 +124,7 @@ export const LightMeter: React.FC<LightMeterProps> = ({
       {/* Persistent Light Meter Corner Widget */}
       <button
         id="btn-light-meter-widget"
+        data-interactive="lantern"
         onClick={handleToggleDetails}
         className={`group relative flex items-center gap-2.5 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-full bg-slate-950/85 hover:bg-slate-900/95 backdrop-blur-xl border border-amber-400/50 hover:border-amber-300 shadow-[0_0_20px_rgba(251,191,36,0.3)] transition-all transform hover:scale-[1.02] cursor-pointer ${
           isGlinting ? 'animate-meter-glint ring-2 ring-amber-300/80 shadow-[0_0_35px_rgba(251,191,36,0.8)] scale-105' : ''

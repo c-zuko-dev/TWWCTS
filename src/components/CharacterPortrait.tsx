@@ -26,6 +26,25 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
   const [floatingNotes, setFloatingNotes] = useState<Array<{ id: number; symbol: string; left: number; top: number; delay: number }>>([]);
   const [isHeartbeating, setIsHeartbeating] = useState(false);
   const [eyeTrackingOffset, setEyeTrackingOffset] = useState({ x: 0, y: 0 });
+  const [isSoftSighing, setIsSoftSighing] = useState(false);
+  const prevExpressionRef = useRef<CharacterExpression>(expression);
+
+  // Trigger randomized 'soft sigh' sound effect & gentle relief exhalation animation when Super Witch transitions from burdened/overwhelmed to calm/peaceful/gentle/relieved
+  useEffect(() => {
+    const prev = prevExpressionRef.current;
+    if (
+      (characterId === 'witch' || characterId === 'human_witch') &&
+      (prev === 'burdened' || prev === 'overwhelmed') &&
+      (expression === 'calm' || expression === 'peaceful' || expression === 'relieved' || expression === 'gentle')
+    ) {
+      audioSynth.playSoftSigh();
+      setIsSoftSighing(true);
+      const timer = window.setTimeout(() => setIsSoftSighing(false), 2200);
+      prevExpressionRef.current = expression;
+      return () => window.clearTimeout(timer);
+    }
+    prevExpressionRef.current = expression;
+  }, [characterId, expression]);
 
   // Subtle interactive eye-tracking effect where character's gaze follows player cursor
   useEffect(() => {
@@ -161,12 +180,29 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
     <div
       ref={portraitRef}
       onClick={handleCharacterClick}
+      data-character={characterId}
+      data-interactive={characterId === 'witch' || characterId === 'human_witch' ? 'witch' : 'character'}
       className={`relative flex items-end justify-center transition-all duration-500 select-none cursor-pointer hover:scale-[1.02] ${
         isSecondary
           ? 'scale-75 opacity-80 -translate-x-4 pointer-events-none'
           : `scale-100 opacity-100 z-10 ${portraitMovementClass}`
       } ${className}`}
     >
+      {/* Soft Sigh of Relief Exhalation Sparkles */}
+      {isSoftSighing && (
+        <div className="absolute -top-6 inset-x-0 z-40 pointer-events-none flex flex-col items-center animate-fade-in">
+          <div className="px-3 py-1 rounded-full bg-amber-950/90 border border-amber-400/70 text-amber-200 text-xs font-serif shadow-xl flex items-center gap-1.5 animate-bounce">
+            <span>✨</span>
+            <span className="italic font-medium">~ *A quiet sigh of relief* ~</span>
+            <span>🌿</span>
+          </div>
+          <div className="flex gap-2 mt-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-300 animate-ping" />
+            <span className="w-1 h-1 rounded-full bg-amber-200 animate-pulse [animation-delay:200ms]" />
+          </div>
+        </div>
+      )}
+
       {/* Floating Character Click Popup */}
       {clickReaction && (
         <div className="absolute top-2 right-4 z-40 pointer-events-none animate-bounce px-2.5 py-1 rounded-full bg-slate-900/90 text-amber-200 border border-amber-400/50 text-xs font-serif shadow-lg flex items-center gap-1">

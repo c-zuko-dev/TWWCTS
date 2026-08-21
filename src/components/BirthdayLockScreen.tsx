@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { KeyRound, Sparkles, Heart, Globe, Lock, Unlock, Moon, Star, Sun } from 'lucide-react';
+import { KeyRound, Sparkles, Heart, Globe, Lock, Unlock, Moon, Star, Sun, Monitor } from 'lucide-react';
 import { Language } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
@@ -269,11 +269,19 @@ export const BirthdayLockScreen: React.FC<BirthdayLockScreenProps> = ({
               : 'Quelque chose de spécial vous attend...'}
           </h1>
 
-          <p className="text-sm font-serif text-amber-200/75 italic mb-6">
+          <p className="text-sm font-serif text-amber-200/75 italic mb-3">
             {language === 'en'
               ? 'Enter the key to unlock the tale ✦'
               : 'Entrez la clé pour ouvrir ce conte ✦'}
           </p>
+
+          {/* Desktop/Laptop Optimization Pill */}
+          <div className="inline-flex items-center justify-center gap-2 px-3.5 py-1 mb-5 rounded-full bg-amber-500/15 border border-amber-400/40 text-amber-200 text-xs font-serif shadow-[0_0_15px_rgba(245,158,11,0.25)]">
+            <Monitor className="w-3.5 h-3.5 text-amber-400" />
+            <span className="font-semibold tracking-wide">
+              {language === 'en' ? 'Best with desktop mode.' : 'Optimisé pour le mode bureau.'}
+            </span>
+          </div>
 
           {/* Code Input Form */}
           <form onSubmit={handleSubmit} className="mb-5">

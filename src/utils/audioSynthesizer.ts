@@ -229,8 +229,9 @@ class AudioSynthesizer {
   /**
    * Typewriter character voice sound effect.
    * Plays soft, distinct pitch & timbre for each character speaking.
+   * Supports 'echo' reverb reflections when reminiscing or in misty/nostalgic scenes (forest/abyss memories).
    */
-  public playTypewriterVoice(speaker: CharacterId, char?: string) {
+  public playTypewriterVoice(speaker: CharacterId, char?: string, isEcho: boolean = false) {
     try {
       this.init();
       if (!this.ctx || !this.voiceGain || this.isMuted) return;
@@ -343,22 +344,142 @@ class AudioSynthesizer {
       gain.gain.linearRampToValueAtTime(prof.gainMax, t + 0.006);
       gain.gain.exponentialRampToValueAtTime(0.0001, t + prof.duration);
 
+      let lastNode: AudioNode = osc;
+
       if (prof.filterType && prof.filterFreq) {
         const filter = this.ctx.createBiquadFilter();
         filter.type = prof.filterType;
         filter.frequency.setValueAtTime(prof.filterFreq, t);
-        osc.connect(filter);
-        filter.connect(gain);
-      } else {
-        osc.connect(gain);
+        lastNode.connect(filter);
+        lastNode = filter;
       }
 
+      lastNode.connect(gain);
       gain.connect(this.voiceGain);
 
+      // Nostalgic Memory Reverb & Cavernous Echo Effect in Forest / Abyss / Flashbacks
+      if (isEcho) {
+        // Tap 1: Soft melancholic primary reflection
+        const delay1 = this.ctx.createDelay();
+        delay1.delayTime.setValueAtTime(0.14 + (Math.random() * 0.03 - 0.015), t);
+
+        const delayFilter = this.ctx.createBiquadFilter();
+        delayFilter.type = 'lowpass';
+        delayFilter.frequency.setValueAtTime(1100, t); // Damped warm cavern air
+
+        const delayGain1 = this.ctx.createGain();
+        delayGain1.gain.setValueAtTime(0.001, t);
+        delayGain1.gain.linearRampToValueAtTime(prof.gainMax * 0.45, t + 0.14);
+        delayGain1.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+
+        // Tap 2: Distant starlight reflection
+        const delay2 = this.ctx.createDelay();
+        delay2.delayTime.setValueAtTime(0.26, t);
+
+        const delayGain2 = this.ctx.createGain();
+        delayGain2.gain.setValueAtTime(0.001, t);
+        delayGain2.gain.linearRampToValueAtTime(prof.gainMax * 0.22, t + 0.26);
+        delayGain2.gain.exponentialRampToValueAtTime(0.0001, t + 0.65);
+
+        lastNode.connect(delay1);
+        delay1.connect(delayFilter);
+        delayFilter.connect(delayGain1);
+        delayGain1.connect(this.voiceGain);
+
+        delayFilter.connect(delay2);
+        delay2.connect(delayGain2);
+        delayGain2.connect(this.voiceGain);
+      }
+
       osc.start(t);
-      osc.stop(t + prof.duration + 0.01);
+      osc.stop(t + (isEcho ? 0.7 : prof.duration + 0.01));
     } catch {
       // ignore typing blip error
+    }
+  }
+
+  /**
+   * Super Witch Soft Sigh of Relief Sound Effect.
+   * Procedurally synthesizes a gentle, randomized warm breath of relief when transitioning
+   * from burdened to calm after solving a scene or overcoming heavy emotional trials.
+   */
+  public playSoftSigh() {
+    try {
+      this.init();
+      if (!this.ctx || !this.voiceGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      const duration = 1.35 + Math.random() * 0.45; // 1.35s - 1.8s organic duration
+      const basePitch = 270 + (Math.random() * 2 - 1) * 25; // ~245-295Hz gentle breath formant
+
+      // 1. Warm Pink/White Noise Breath Formant
+      const noiseBuffer = this.createWarmNoiseBuffer();
+      if (noiseBuffer) {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+
+        const noiseFilter = this.ctx.createBiquadFilter();
+        noiseFilter.type = 'bandpass';
+        noiseFilter.frequency.setValueAtTime(740 + Math.random() * 60, t);
+        // Exhalation frequency gently glides downwards like a deep breath out
+        noiseFilter.frequency.exponentialRampToValueAtTime(360, t + duration * 0.85);
+        noiseFilter.Q.setValueAtTime(2.2, t);
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.001, t);
+        noiseGain.gain.linearRampToValueAtTime(0.12 + Math.random() * 0.03, t + 0.24);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+
+        noise.connect(noiseFilter);
+        noiseFilter.connect(noiseGain);
+        noiseGain.connect(this.voiceGain);
+
+        noise.start(t);
+        noise.stop(t + duration + 0.05);
+      }
+
+      // 2. Soft Whispered Sine Undertone (Subtle Vocal Cord Relaxation)
+      const osc = this.ctx.createOscillator();
+      const oscGain = this.ctx.createGain();
+      const oscFilter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(basePitch, t);
+      osc.frequency.exponentialRampToValueAtTime(basePitch * 0.58, t + duration * 0.9);
+
+      oscFilter.type = 'lowpass';
+      oscFilter.frequency.setValueAtTime(520, t);
+      oscFilter.frequency.exponentialRampToValueAtTime(220, t + duration);
+
+      oscGain.gain.setValueAtTime(0.0001, t);
+      oscGain.gain.linearRampToValueAtTime(0.042, t + 0.28);
+      oscGain.gain.exponentialRampToValueAtTime(0.0001, t + duration * 0.95);
+
+      osc.connect(oscFilter);
+      oscFilter.connect(oscGain);
+      oscGain.connect(this.voiceGain);
+
+      osc.start(t);
+      osc.stop(t + duration + 0.05);
+
+      // 3. Delicate Starlight Sparkle Tailwind (Subtle shimmer of peaceful relief)
+      setTimeout(() => {
+        if (!this.ctx || !this.sfxGain || this.isMuted) return;
+        const t2 = this.ctx.currentTime;
+        const chime = this.ctx.createOscillator();
+        const chimeGain = this.ctx.createGain();
+        chime.type = 'sine';
+        chime.frequency.setValueAtTime(1046.5 + Math.random() * 120, t2); // C6 gentle sparkle
+        chimeGain.gain.setValueAtTime(0.001, t2);
+        chimeGain.gain.linearRampToValueAtTime(0.025, t2 + 0.02);
+        chimeGain.gain.exponentialRampToValueAtTime(0.0001, t2 + 0.6);
+        chime.connect(chimeGain);
+        chimeGain.connect(this.sfxGain);
+        chime.start(t2);
+        chime.stop(t2 + 0.65);
+      }, (duration * 0.45) * 1000);
+    } catch {
+      // ignore sigh sfx error
     }
   }
 

@@ -20,7 +20,7 @@ import { BirthdayLockScreen } from './components/BirthdayLockScreen';
 import { setupSecurityGuard } from './utils/securityGuard';
 import { STORY_DATA, ALL_COLLECTIBLE_LIGHTS } from './data/storyData';
 import { audioSynth } from './utils/audioSynthesizer';
-import { ChoiceOption, GameState, Language, LightItem, ViewMode, CozyModeIntensity, SavedGamePreview, DialogueLine, CharacterId, SceneLocation } from './types';
+import { ChoiceOption, GameState, Language, LightItem, CozyModeIntensity, SavedGamePreview, DialogueLine, CharacterId, SceneLocation } from './types';
 
 const STORAGE_KEY = 'witch_sun_save_v1';
 const COZY_MODE_KEY = 'witch_sun_cozy_mode';
@@ -54,7 +54,6 @@ export default function App() {
   });
   const [currentSceneId, setCurrentSceneId] = useState<string>('prologue_1');
   const [language, setLanguage] = useState<Language>('en');
-  const [viewMode, setViewMode] = useState<ViewMode>('pc');
   const [dialogueHistory, setDialogueHistory] = useState<{ speaker: string; text: string; id: string }[]>([]);
   const [collectedLights, setCollectedLights] = useState<LightItem[]>([]);
   const [isMuted, setIsMuted] = useState(false);
@@ -684,7 +683,7 @@ export default function App() {
   }
 
   return (
-    <main className={`relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col justify-between select-none font-sans ${viewMode === 'phone' ? 'items-center justify-center py-2' : ''} ${shakeClass}`}>
+    <main className={`relative w-screen h-screen overflow-hidden bg-slate-950 text-slate-100 flex flex-col justify-between select-none font-sans ${shakeClass}`}>
       {/* Subtle Auto-Save Toast Notification */}
       <AutoSaveToast
         isVisible={showAutoSaveToast && !inTitleScreen && !isShowingStorybookOpening && !isShowingStorybookEnding}
@@ -701,12 +700,8 @@ export default function App() {
         </div>
       )}
 
-      {/* Phone Mode Bezel Container if Phone mode selected */}
-      <div className={`relative overflow-hidden transition-all duration-500 ${
-        viewMode === 'phone'
-          ? 'w-full max-w-[430px] h-[94vh] rounded-[40px] border-[6px] border-slate-800 shadow-[0_0_60px_rgba(0,0,0,0.9)] ring-1 ring-amber-500/30 flex flex-col justify-between'
-          : 'w-full h-full flex flex-col justify-between'
-      }`}>
+      {/* Full Desktop Stage Container */}
+      <div className="relative w-full h-full flex flex-col justify-between overflow-hidden">
         {/* Background World Visualizer */}
         <ScenicBackground
           location={currentScene.location || 'cottage_twilight'}
@@ -856,8 +851,6 @@ export default function App() {
             onToggleLanguage={handleToggleLanguage}
             isMuted={isMuted}
             onToggleAudio={handleToggleAudio}
-            viewMode={viewMode}
-            onSetViewMode={setViewMode}
             savePreview={savePreview}
             cozyMode={cozyMode}
             onCycleCozyMode={handleCycleCozyMode}
@@ -1010,6 +1003,7 @@ export default function App() {
                   expression={currentScene.expression}
                   text={currentScene.text}
                   language={language}
+                  location={currentScene.location}
                   onAdvance={advanceScene}
                   onPrevious={handlePreviousScene}
                   canGoBack={sceneHistory.length > 0}
