@@ -307,12 +307,28 @@ class AudioSynthesizer {
           filterType: 'lowpass',
           filterFreq: 600,
         },
+        vivienne: {
+          type: 'triangle',
+          baseFreq: 280, // Rich warm earthen woodblock / kiln resonance
+          freqVariation: 20,
+          duration: 0.035,
+          gainMax: 0.08,
+          filterType: 'lowpass',
+          filterFreq: 600,
+        },
         hypo: {
           type: 'sine',
           baseFreq: 392, // G4 gentle rhythmic tone
           freqVariation: 25,
           duration: 0.032,
           gainMax: 0.07,
+        },
+        gbear: {
+          type: 'sine',
+          baseFreq: 880, // A5 sweet warm teddy squeak
+          freqVariation: 45,
+          duration: 0.034,
+          gainMax: 0.075,
         },
         everyone: {
           type: 'sine',
@@ -1446,6 +1462,151 @@ class AudioSynthesizer {
     }
   }
 
+  /**
+   * GBear Magical High-Pitched Giggle & Sparkle Sound Effect:
+   * Plays a joyful, sweet teddy chuckle (playful ascending giggles) with crystalline stardust chime.
+   */
+  public playGBearGiggle() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+
+      // 1. High-pitched magical teddy giggle triplets ("hee-hee-hee!")
+      const gigglePitches = [
+        { f1: 880.0, f2: 1174.66, time: 0.0 },   // A5 -> D6
+        { f1: 1046.5, f2: 1318.51, time: 0.09 }, // C6 -> E6
+        { f1: 1174.66, f2: 1567.98, time: 0.18 }, // D6 -> G6
+        { f1: 1318.51, f2: 1760.0, time: 0.27 }, // E6 -> A6
+      ];
+
+      gigglePitches.forEach(({ f1, f2, time }, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const noteT = t + time;
+        const osc = this.ctx.createOscillator();
+        const formant = this.ctx.createBiquadFilter();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(f1, noteT);
+        osc.frequency.exponentialRampToValueAtTime(f2, noteT + 0.04);
+        osc.frequency.exponentialRampToValueAtTime(f1 * 0.95, noteT + 0.075);
+
+        formant.type = 'bandpass';
+        formant.frequency.setValueAtTime(2400 + idx * 300, noteT);
+        formant.Q.setValueAtTime(3.2, noteT);
+
+        gain.gain.setValueAtTime(0.001, noteT);
+        gain.gain.linearRampToValueAtTime(0.18, noteT + 0.012);
+        gain.gain.exponentialRampToValueAtTime(0.0001, noteT + 0.08);
+
+        osc.connect(formant);
+        formant.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(noteT);
+        osc.stop(noteT + 0.085);
+      });
+
+      // 2. Sweet secondary playful bubble pop echo
+      const popOsc = this.ctx.createOscillator();
+      const popGain = this.ctx.createGain();
+      popOsc.type = 'triangle';
+      popOsc.frequency.setValueAtTime(1480, t + 0.36);
+      popOsc.frequency.exponentialRampToValueAtTime(2093, t + 0.42);
+      popGain.gain.setValueAtTime(0.001, t + 0.36);
+      popGain.gain.linearRampToValueAtTime(0.12, t + 0.38);
+      popGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.48);
+      popOsc.connect(popGain);
+      popGain.connect(this.sfxGain);
+      popOsc.start(t + 0.36);
+      popOsc.stop(t + 0.5);
+
+      // 3. Stardust chime cascade (G6, B6, D7, G7)
+      const stardustFreqs = [1567.98, 1975.53, 2349.32, 3135.96];
+      stardustFreqs.forEach((freq, idx) => {
+        if (!this.ctx || !this.sfxGain) return;
+        const chimeT = t + 0.14 + idx * 0.04;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, chimeT);
+
+        gain.gain.setValueAtTime(0.001, chimeT);
+        gain.gain.linearRampToValueAtTime(0.15 - idx * 0.02, chimeT + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, chimeT + 0.65);
+
+        osc.connect(gain);
+        gain.connect(this.sfxGain);
+
+        osc.start(chimeT);
+        osc.stop(chimeT + 0.7);
+      });
+    } catch {
+      // non-fatal audio catch
+    }
+  }
+
+  /**
+   * GBear Interactive Teddy Squeak & Magical Honey Sparkle:
+   * Squeaks cheerfully when clicked or cuddled, followed by a warm harmonic chime and soft magical giggle.
+   */
+  public playGBearSqueak() {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+
+      // 1. Cute Rubbery Plushie Squeak (rapid pitch swoop up and down)
+      const squeakOsc = this.ctx.createOscillator();
+      const squeakGain = this.ctx.createGain();
+      squeakOsc.type = 'sine';
+      squeakOsc.frequency.setValueAtTime(580, t);
+      squeakOsc.frequency.exponentialRampToValueAtTime(1250, t + 0.04);
+      squeakOsc.frequency.exponentialRampToValueAtTime(820, t + 0.09);
+
+      squeakGain.gain.setValueAtTime(0.001, t);
+      squeakGain.gain.linearRampToValueAtTime(0.22, t + 0.015);
+      squeakGain.gain.exponentialRampToValueAtTime(0.001, t + 0.11);
+
+      squeakOsc.connect(squeakGain);
+      squeakGain.connect(this.sfxGain);
+
+      squeakOsc.start(t);
+      squeakOsc.stop(t + 0.12);
+
+      // 2. Playful Secondary "Pop-Squeak" Echo
+      setTimeout(() => {
+        if (!this.ctx || !this.sfxGain || this.isMuted) return;
+        const t2 = this.ctx.currentTime;
+        const osc2 = this.ctx.createOscillator();
+        const gain2 = this.ctx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(740, t2);
+        osc2.frequency.exponentialRampToValueAtTime(1480, t2 + 0.035);
+        osc2.frequency.exponentialRampToValueAtTime(980, t2 + 0.08);
+
+        gain2.gain.setValueAtTime(0.001, t2);
+        gain2.gain.linearRampToValueAtTime(0.18, t2 + 0.012);
+        gain2.gain.exponentialRampToValueAtTime(0.001, t2 + 0.09);
+
+        osc2.connect(gain2);
+        gain2.connect(this.sfxGain);
+
+        osc2.start(t2);
+        osc2.stop(t2 + 0.1);
+      }, 70);
+
+      // 3. Cheerful Magical Giggle & Golden Sparkle Chime Chord (G5, B5, D6, G6)
+      this.playGBearGiggle();
+    } catch {
+      // ignore
+    }
+  }
+
   public playGoldenChime() {
     try {
       this.init();
@@ -1599,6 +1760,80 @@ class AudioSynthesizer {
         osc.start(noteTime);
         osc.stop(noteTime + 1.5);
       });
+    } catch {
+      // non-fatal audio catch
+    }
+  }
+
+  /**
+   * Rhythmic 'marching parade' sound effect specifically during the character parade sequence.
+   * Features a whimsical storybook percussion cadence with glockenspiel/music box starlight accents.
+   */
+  public playParadeMarchBeat(step: number = 0) {
+    try {
+      this.init();
+      if (!this.ctx || !this.sfxGain || this.isMuted) return;
+
+      const t = this.ctx.currentTime;
+      const isDownbeat = step % 2 === 0;
+
+      // 1. Soft whimsical wooden drum / percussive march tap
+      const noiseBuffer = this.createWarmNoiseBuffer();
+      if (noiseBuffer) {
+        const noise = this.ctx.createBufferSource();
+        noise.buffer = noiseBuffer;
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(isDownbeat ? 220 : 340, t);
+        filter.Q.setValueAtTime(3.5, t);
+
+        const noiseGain = this.ctx.createGain();
+        noiseGain.gain.setValueAtTime(0.001, t);
+        noiseGain.gain.linearRampToValueAtTime(isDownbeat ? 0.18 : 0.12, t + 0.008);
+        noiseGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.12);
+
+        noise.connect(filter);
+        filter.connect(noiseGain);
+        noiseGain.connect(this.sfxGain);
+
+        noise.start(t);
+        noise.stop(t + 0.13);
+      }
+
+      // 2. Soft low acoustic march pulse
+      const drumOsc = this.ctx.createOscillator();
+      const drumGain = this.ctx.createGain();
+      drumOsc.type = 'triangle';
+      const baseFreq = isDownbeat ? 110 : 130;
+      drumOsc.frequency.setValueAtTime(baseFreq, t);
+      drumOsc.frequency.exponentialRampToValueAtTime(55, t + 0.1);
+
+      drumGain.gain.setValueAtTime(0.001, t);
+      drumGain.gain.linearRampToValueAtTime(isDownbeat ? 0.22 : 0.15, t + 0.006);
+      drumGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.14);
+
+      drumOsc.connect(drumGain);
+      drumGain.connect(this.sfxGain);
+      drumOsc.start(t);
+      drumOsc.stop(t + 0.15);
+
+      // 3. Whimsical Starlight Glockenspiel / Toy March Note
+      const marchMelody = [523.25, 659.25, 783.99, 1046.5, 880.0, 783.99, 659.25, 587.33]; // C5, E5, G5, C6, A5, G5, E5, D5
+      const noteFreq = marchMelody[step % marchMelody.length];
+
+      const bellOsc = this.ctx.createOscillator();
+      const bellGain = this.ctx.createGain();
+      bellOsc.type = 'sine';
+      bellOsc.frequency.setValueAtTime(noteFreq, t);
+
+      bellGain.gain.setValueAtTime(0.001, t);
+      bellGain.gain.linearRampToValueAtTime(0.08, t + 0.01);
+      bellGain.gain.exponentialRampToValueAtTime(0.0001, t + 0.35);
+
+      bellOsc.connect(bellGain);
+      bellGain.connect(this.sfxGain);
+      bellOsc.start(t);
+      bellOsc.stop(t + 0.36);
     } catch {
       // non-fatal audio catch
     }
@@ -2811,6 +3046,52 @@ class AudioSynthesizer {
           break;
         }
 
+        case 'magical_chime': {
+          // Enchanted celestial chime cascade with golden overtone shimmer
+          const notes = [
+            { f: 659.25, time: 0, gain: 0.16 },      // E5
+            { f: 830.61, time: 0.07, gain: 0.18 },   // G#5
+            { f: 987.77, time: 0.14, gain: 0.20 },   // B5
+            { f: 1318.51, time: 0.21, gain: 0.22 },  // E6
+            { f: 1661.22, time: 0.28, gain: 0.19 },  // G#6
+            { f: 1975.53, time: 0.35, gain: 0.17 },  // B6
+            { f: 2637.02, time: 0.44, gain: 0.14 },  // E7 (pure starlight high chime)
+          ];
+
+          notes.forEach(({ f, time, gain: gVal }) => {
+            if (!this.ctx || !this.sfxGain) return;
+            const startTime = t + time;
+
+            // Primary crystalline bell (Sine)
+            const osc = this.ctx.createOscillator();
+            const gain = this.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(f, startTime);
+            osc.frequency.exponentialRampToValueAtTime(f * 1.002, startTime + 1.5);
+            gain.gain.setValueAtTime(0.001, startTime);
+            gain.gain.linearRampToValueAtTime(gVal, startTime + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.001, startTime + 1.6);
+            osc.connect(gain);
+            gain.connect(this.sfxGain);
+            osc.start(startTime);
+            osc.stop(startTime + 1.65);
+
+            // Shimmering overtone harmonic (Triangle)
+            const oscHarm = this.ctx.createOscillator();
+            const gainHarm = this.ctx.createGain();
+            oscHarm.type = 'triangle';
+            oscHarm.frequency.setValueAtTime(f * 2, startTime);
+            gainHarm.gain.setValueAtTime(0.001, startTime);
+            gainHarm.gain.linearRampToValueAtTime(gVal * 0.35, startTime + 0.015);
+            gainHarm.gain.exponentialRampToValueAtTime(0.0001, startTime + 0.9);
+            oscHarm.connect(gainHarm);
+            gainHarm.connect(this.sfxGain);
+            oscHarm.start(startTime);
+            oscHarm.stop(startTime + 0.95);
+          });
+          break;
+        }
+
         case 'candle_flicker': {
           // Gentle flame crackle and warm subtle spark
           const osc = this.ctx.createOscillator();
@@ -2994,6 +3275,7 @@ class AudioSynthesizer {
           break;
         }
 
+        case 'pillow_squeak':
         case 'hypo_squeak': {
           // Playful baby hippo chortle & gentle water bloop
           const osc = this.ctx.createOscillator();
@@ -3462,61 +3744,119 @@ class AudioSynthesizer {
       // Special emotional cinematic soundtrack for credits
       if (theme === 'credits') {
         const emotionalProgression = [
-          // 1. C major (Warm homecoming)
-          { chord: [261.63, 329.63, 392, 523.25], arpeggio: [523.25, 659.25, 783.99, 1046.5] },
+          // 1. C major 9 (Warm homecoming)
+          { chord: [130.81, 196.0, 261.63, 329.63, 392.0, 493.88], arpeggio: [523.25, 659.25, 783.99, 987.77, 1046.5], bass: 65.41 },
           // 2. G/B (Gentle longing)
-          { chord: [246.94, 293.66, 392, 493.88], arpeggio: [493.88, 587.33, 783.99, 987.77] },
+          { chord: [123.47, 196.0, 246.94, 293.66, 392.0], arpeggio: [493.88, 587.33, 783.99, 987.77, 1174.66], bass: 61.74 },
           // 3. Am7 (Tender gratitude)
-          { chord: [220, 261.63, 329.63, 440], arpeggio: [440, 523.25, 659.25, 880] },
+          { chord: [110.0, 164.81, 220.0, 261.63, 329.63, 440.0], arpeggio: [440.0, 523.25, 659.25, 880.0, 1046.5], bass: 55.0 },
           // 4. Em/G (Nostalgic quiet)
-          { chord: [196, 246.94, 329.63, 392], arpeggio: [392, 493.88, 659.25, 783.99] },
-          // 5. Fmaj7 (Soaring hope)
-          { chord: [174.61, 220, 261.63, 329.63, 440], arpeggio: [349.23, 440, 523.25, 659.25] },
+          { chord: [98.0, 146.83, 196.0, 246.94, 329.63], arpeggio: [392.0, 493.88, 659.25, 783.99, 987.77], bass: 49.0 },
+          // 5. Fmaj7 (Soaring hope & warmth)
+          { chord: [87.31, 130.81, 174.61, 220.0, 261.63, 329.63], arpeggio: [349.23, 440.0, 523.25, 659.25, 880.0], bass: 43.65 },
           // 6. C/E (Warm embrace)
-          { chord: [164.81, 261.63, 329.63, 392], arpeggio: [329.63, 392, 523.25, 659.25] },
-          // 7. Dm7 (Gentle farewell)
-          { chord: [146.83, 220, 261.63, 349.23], arpeggio: [293.66, 349.23, 440, 587.33] },
-          // 8. G7sus4 -> G7 (Rising resolve)
-          { chord: [196, 261.63, 293.66, 392], arpeggio: [392, 493.88, 587.33, 783.99] },
+          { chord: [82.41, 130.81, 164.81, 261.63, 329.63], arpeggio: [329.63, 392.0, 523.25, 659.25, 783.99], bass: 41.2 },
+          // 7. Dm7 (Gentle farewell & reminiscence)
+          { chord: [73.42, 110.0, 146.83, 220.0, 261.63, 349.23], arpeggio: [293.66, 349.23, 440.0, 587.33, 698.46], bass: 36.71 },
+          // 8. G7sus4 -> G7 (Rising resolve and endless light)
+          { chord: [98.0, 146.83, 196.0, 261.63, 293.66, 392.0], arpeggio: [392.0, 493.88, 587.33, 783.99, 1046.5], bass: 49.0 },
         ];
 
         const step = emotionalProgression[this.creditsStepIndex % emotionalProgression.length];
         this.creditsStepIndex++;
 
-        // Warm emotional pad layer
+        // 1. Deep Sub-Bass / Cello Foundation
+        if (this.ctx && this.musicGain) {
+          try {
+            const bassOsc = this.ctx.createOscillator();
+            const bassGain = this.ctx.createGain();
+            const bassFilter = this.ctx.createBiquadFilter();
+            bassOsc.type = 'sine';
+            bassOsc.frequency.setValueAtTime(step.bass, t);
+            bassFilter.type = 'lowpass';
+            bassFilter.frequency.setValueAtTime(140, t);
+            bassGain.gain.setValueAtTime(0.001, t);
+            bassGain.gain.linearRampToValueAtTime(0.14, t + 0.8);
+            bassGain.gain.exponentialRampToValueAtTime(0.001, t + 4.6);
+            bassOsc.connect(bassFilter);
+            bassFilter.connect(bassGain);
+            bassGain.connect(this.musicGain);
+            bassOsc.start(t);
+            bassOsc.stop(t + 4.7);
+          } catch {}
+        }
+
+        // 2. Warm Emotional String & Piano Chords
         step.chord.forEach((freq, idx) => {
           if (!this.ctx || !this.musicGain) return;
           try {
-            const osc = this.ctx.createOscillator();
-            const gain = this.ctx.createGain();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(freq, t + idx * 0.12);
-            gain.gain.setValueAtTime(0.001, t + idx * 0.12);
-            gain.gain.linearRampToValueAtTime(0.08, t + idx * 0.12 + 1.2);
-            gain.gain.exponentialRampToValueAtTime(0.001, t + idx * 0.12 + 4.4);
-            osc.connect(gain);
-            gain.connect(this.musicGain);
-            osc.start(t + idx * 0.12);
-            osc.stop(t + idx * 0.12 + 4.6);
+            // Piano Body
+            const pianoOsc = this.ctx.createOscillator();
+            const pianoFilter = this.ctx.createBiquadFilter();
+            const pianoGain = this.ctx.createGain();
+            const startOffset = t + idx * 0.08;
+
+            pianoOsc.type = idx % 2 === 0 ? 'sine' : 'triangle';
+            pianoOsc.frequency.setValueAtTime(freq, startOffset);
+
+            pianoFilter.type = 'lowpass';
+            pianoFilter.frequency.setValueAtTime(freq * 3.5, startOffset);
+            pianoFilter.frequency.exponentialRampToValueAtTime(freq * 1.4, startOffset + 2.0);
+
+            pianoGain.gain.setValueAtTime(0.001, startOffset);
+            pianoGain.gain.linearRampToValueAtTime(0.11 / (1 + idx * 0.12), startOffset + 0.03);
+            pianoGain.gain.exponentialRampToValueAtTime(0.001, startOffset + 3.8);
+
+            pianoOsc.connect(pianoFilter);
+            pianoFilter.connect(pianoGain);
+            pianoGain.connect(this.musicGain);
+            pianoOsc.start(startOffset);
+            pianoOsc.stop(startOffset + 4.0);
+
+            // Warm String Pad Layer
+            const padOsc = this.ctx.createOscillator();
+            const padGain = this.ctx.createGain();
+            padOsc.type = 'triangle';
+            padOsc.frequency.setValueAtTime(freq, t);
+            padGain.gain.setValueAtTime(0.001, t);
+            padGain.gain.linearRampToValueAtTime(0.045, t + 1.2);
+            padGain.gain.exponentialRampToValueAtTime(0.001, t + 4.5);
+            padOsc.connect(padGain);
+            padGain.connect(this.musicGain);
+            padOsc.start(t);
+            padOsc.stop(t + 4.7);
           } catch {}
         });
 
-        // Tender celesta / piano arpeggio
+        // 3. Tender Celesta / Starlight Bell Arpeggios
         step.arpeggio.forEach((freq, idx) => {
           if (!this.ctx || !this.musicGain) return;
           try {
             const osc = this.ctx.createOscillator();
             const gain = this.ctx.createGain();
-            const start = t + 0.6 + idx * 0.7;
+            const start = t + 0.5 + idx * 0.65;
             osc.type = 'sine';
             osc.frequency.setValueAtTime(freq, start);
             gain.gain.setValueAtTime(0.001, start);
-            gain.gain.linearRampToValueAtTime(0.09, start + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, start + 1.8);
+            gain.gain.linearRampToValueAtTime(0.09, start + 0.02);
+            gain.gain.exponentialRampToValueAtTime(0.0001, start + 1.9);
             osc.connect(gain);
             gain.connect(this.musicGain);
             osc.start(start);
             osc.stop(start + 2.0);
+
+            // Shimmering second harmonic
+            const harm = this.ctx.createOscillator();
+            const harmG = this.ctx.createGain();
+            harm.type = 'triangle';
+            harm.frequency.setValueAtTime(freq * 2, start);
+            harmG.gain.setValueAtTime(0.001, start);
+            harmG.gain.linearRampToValueAtTime(0.025, start + 0.015);
+            harmG.gain.exponentialRampToValueAtTime(0.0001, start + 1.0);
+            harm.connect(harmG);
+            harmG.connect(this.musicGain);
+            harm.start(start);
+            harm.stop(start + 1.1);
           } catch {}
         });
 

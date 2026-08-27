@@ -20,7 +20,9 @@ export type CharacterId =
   | 'clown'
   | 'orik'
   | 'artisan'
+  | 'vivienne'
   | 'hypo'
+  | 'gbear'
   | 'everyone';
 
 export type WitchExpression =
@@ -33,7 +35,9 @@ export type WitchExpression =
   | 'relieved'
   | 'peaceful'
   | 'surprised'
-  | 'happy';
+  | 'happy'
+  | 'receiving_gbear'
+  | 'holding_gbear';
 
 export type LezarExpression =
   | 'calm'
@@ -51,6 +55,7 @@ export type ClownExpression =
   | 'abyss_surprised'
   | 'gentleman_theatrical'
   | 'gentleman_soft'
+  | 'gentleman_presenting_bear'
   | 'gentleman_surprised'
   | 'gentleman_normal'
   | 'theatrical'
@@ -119,6 +124,7 @@ export type SoundEffectType =
   | 'glass_shimmer'
   | 'mirror_transform'
   | 'celebration_chimes'
+  | 'magical_chime'
   | 'candle_flicker'
   | 'magic_whoosh'
   | 'door_creak'
@@ -126,6 +132,7 @@ export type SoundEffectType =
   | 'orik_chirp'
   | 'vivienne_laugh'
   | 'hypo_squeak'
+  | 'pillow_squeak'
   | 'wendy_giggle'
   | 'clown_musical'
   | 'marmot_squeak'

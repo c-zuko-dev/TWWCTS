@@ -74,20 +74,31 @@ export default function App() {
   const isEnding = currentSceneId === 'epilogue_screen';
 
   // Check if Wendy has received the SWW pin from Mélo Clown at the birthday feast
-  const hasSwwPin =
-    collectedLights.some((item) => item.id === 'sww_pin') ||
-    [
-      'epilogue_16',
-      'epilogue_17',
-      'epilogue_18',
-      'epilogue_19',
-      'epilogue_20',
-      'epilogue_21',
-      'epilogue_screen',
-    ].includes(currentSceneId);
+  // In the celebration scene, Wendy only wears the SWW pin after Mélo Clown gave it to her (epilogue_16 onwards)
+  const postPinCelebrationScenes = [
+    'epilogue_16',
+    'epilogue_17',
+    'epilogue_18',
+    'epilogue_19',
+    'epilogue_20',
+    'epilogue_21',
+    'epilogue_22_melo',
+    'epilogue_23_melo_wave',
+    'epilogue_screen',
+  ];
+
+  // The SWW pin is strictly only worn after Mélo Clown gifts it to Wendy in epilogue_16!
+  // It is NOT worn during Sun returns (chapter7), mirror (chapter9), or early celebration scenes.
+  const hasSwwPin = postPinCelebrationScenes.includes(currentSceneId);
 
   const autoPlayTimerRef = useRef<number | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
+  const prologueTimersRef = useRef<number[]>([]);
+
+  const clearPrologueTimers = () => {
+    prologueTimersRef.current.forEach((t) => window.clearTimeout(t));
+    prologueTimersRef.current = [];
+  };
 
   // Determine transition mood tint for smooth, immersive scene bridging
   const getSceneMoodTint = (scene: DialogueLine) => {
@@ -428,6 +439,7 @@ export default function App() {
   };
 
   const handleCompleteStorybookOpening = () => {
+    clearPrologueTimers();
     setIsShowingStorybookOpening(false);
     setIsShowingCredits(false);
     setCurrentSceneId('prologue_1');
@@ -441,21 +453,25 @@ export default function App() {
     setProloguePhase('opening_dissolve');
     audioSynth.playSoundEffect('magic_sparkle');
 
-    setTimeout(() => {
+    const t1 = window.setTimeout(() => {
       setProloguePhase('prologue_card');
       audioSynth.playSoundEffect('soft_bell');
 
-      setTimeout(() => {
+      const t2 = window.setTimeout(() => {
         setProloguePhase('environment_reveal');
 
-        setTimeout(() => {
+        const t3 = window.setTimeout(() => {
           setProloguePhase('none');
         }, 900);
+        prologueTimersRef.current.push(t3);
       }, 1300);
+      prologueTimersRef.current.push(t2);
     }, 850);
+    prologueTimersRef.current.push(t1);
   };
 
   const handleContinueGame = () => {
+    clearPrologueTimers();
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -481,6 +497,7 @@ export default function App() {
   };
 
   const handleRestart = () => {
+    clearPrologueTimers();
     audioSynth.playSoundEffect('magic_surge');
     setCurrentSceneId('prologue_1');
     setCollectedLights([]);
@@ -494,6 +511,7 @@ export default function App() {
   };
 
   const handleReturnToTitle = () => {
+    clearPrologueTimers();
     audioSynth.playSoundEffect('click');
     setIsShowingCredits(false);
     setIsShowingStorybookOpening(false);
@@ -576,17 +594,19 @@ export default function App() {
     : '';
 
   // Dynamic Character Camera Zoom for cinematic storytelling
+  const hasActiveChoices = Boolean(currentScene.choices && currentScene.choices.length > 0);
   const zoomMode = currentScene.zoom || 'normal';
-  const zoomTransformClass =
-    zoomMode === 'close_up' || zoomMode === 'close'
-      ? 'scale-115 sm:scale-125 -translate-y-4 sm:-translate-y-6'
-      : zoomMode === 'extreme_close' || zoomMode === 'cinematic'
-      ? 'scale-130 sm:scale-140 -translate-y-8 sm:-translate-y-10'
-      : zoomMode === 'wide'
-      ? 'scale-90 translate-y-2'
-      : zoomMode === 'medium'
-      ? 'scale-110 -translate-y-2'
-      : 'scale-100 translate-y-0';
+  const zoomTransformClass = hasActiveChoices
+    ? 'scale-[0.68] sm:scale-[0.74] max-h-[32vh] sm:max-h-[36vh] origin-bottom mb-1'
+    : zoomMode === 'close_up' || zoomMode === 'close'
+    ? 'scale-105 sm:scale-110 -translate-y-1 sm:-translate-y-2'
+    : zoomMode === 'extreme_close' || zoomMode === 'cinematic'
+    ? 'scale-112 sm:scale-118 -translate-y-2 sm:-translate-y-3'
+    : zoomMode === 'wide'
+    ? 'scale-90 translate-y-2'
+    : zoomMode === 'medium'
+    ? 'scale-100 translate-y-0'
+    : 'scale-95 sm:scale-100 translate-y-0';
 
   // Subtle Portrait Cross-Dissolve Tracking when speaker changes within the same scene location
   const previousSpeakerRef = useRef<CharacterId | null>(null);
@@ -764,7 +784,7 @@ export default function App() {
         )}
 
         {/* Prologue Opening Dissolve & Chapter Transition Sequence */}
-        {prologuePhase === 'opening_dissolve' && (
+        {currentSceneId === 'prologue_1' && !isEnding && !isMemoriesOpen && !inTitleScreen && !isShowingCredits && !isShowingStorybookOpening && !isShowingStorybookEnding && prologuePhase === 'opening_dissolve' && (
           <div
             onClick={() => setProloguePhase('none')}
             className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950/95 backdrop-blur-md animate-fade-in text-center px-6 cursor-pointer"
@@ -783,7 +803,7 @@ export default function App() {
         )}
 
         {/* Prologue Chapter Banner Card with Breathing Room */}
-        {prologuePhase === 'prologue_card' && (
+        {currentSceneId === 'prologue_1' && !isEnding && !isMemoriesOpen && !inTitleScreen && !isShowingCredits && !isShowingStorybookOpening && !isShowingStorybookEnding && prologuePhase === 'prologue_card' && (
           <div
             onClick={() => setProloguePhase('none')}
             className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm animate-fade-in text-center px-4 cursor-pointer"
@@ -801,7 +821,7 @@ export default function App() {
         )}
 
         {/* Environment Reveal Stage: Environment settles before narration */}
-        {prologuePhase === 'environment_reveal' && (
+        {currentSceneId === 'prologue_1' && !isEnding && !isMemoriesOpen && !inTitleScreen && !isShowingCredits && !isShowingStorybookOpening && !isShowingStorybookEnding && prologuePhase === 'environment_reveal' && (
           <div
             onClick={() => setProloguePhase('none')}
             className="fixed inset-0 z-40 bg-slate-950/30 transition-opacity duration-1000 pointer-events-auto cursor-pointer"
@@ -844,7 +864,10 @@ export default function App() {
             onStartGame={handleStartGame}
             onContinueGame={hasSaveData ? handleContinueGame : undefined}
             onShowCredits={() => setIsShowingCredits(true)}
-            onOpenMemories={() => setIsMemoriesOpen(true)}
+            onOpenMemories={() => {
+              setProloguePhase('none');
+              setIsMemoriesOpen(true);
+            }}
             playCount={playCount}
             hasSaveData={hasSaveData}
             language={language}
@@ -864,6 +887,7 @@ export default function App() {
             isMuted={isMuted}
             onToggleAudio={handleToggleAudio}
             onViewMemories={() => {
+              setProloguePhase('none');
               setIsShowingCredits(false);
               setIsShowingStorybookEnding(false);
               setCurrentSceneId('epilogue_screen');
@@ -915,7 +939,10 @@ export default function App() {
               language={language}
               onRestart={handleRestart}
               onReturnToTitle={handleReturnToTitle}
-              onOpenMemories={() => setIsMemoriesOpen(true)}
+              onOpenMemories={() => {
+                setProloguePhase('none');
+                setIsMemoriesOpen(true);
+              }}
               playCount={playCount}
             />
           </div>

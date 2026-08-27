@@ -1081,6 +1081,9 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
               <stop offset="60%" stopColor="#fed7aa" />
               <stop offset="100%" stopColor="#fef08a" />
             </linearGradient>
+            <clipPath id="paintingClip">
+              <rect x="12" y="12" width="146" height="96" rx="2" />
+            </clipPath>
           </defs>
           <rect width="1200" height="800" fill="url(#partyRoom)" />
           
@@ -1091,31 +1094,101 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
           <path d="M80 600 L80 260 Q200 140 320 260 L320 600 Z" fill="#1c1917" opacity="0.4" stroke="#451a03" strokeWidth="4" />
           <path d="M480 600 L480 260 Q600 140 720 260 L720 600 Z" fill="#1c1917" opacity="0.4" stroke="#451a03" strokeWidth="4" />
 
-          {/* Framed Watercolor Art Painting of the Meadow & Cottage on the Castle Wall */}
-          <g transform="translate(180, 200)">
-            {/* Gilded Antique Frame */}
-            <rect x="0" y="0" width="170" height="120" rx="8" fill="#78350f" stroke="#fbbf24" strokeWidth="4" />
+          {/* Framed Interactive Living Watercolor Painting of the Meadow & Cottage */}
+          <g
+            id="living-celebration-painting"
+            transform="translate(180, 200)"
+            onClick={(e) =>
+              handleFoodClick(
+                e,
+                'living_painting',
+                'The enchanted painting comes alive with singing breeze, dancing sunlight, and gentle cottage smoke! 🎨🖼️✨',
+                'Le tableau magique prend vie avec une brise chantante, des rayons de soleil dansants et la douce fumée du cottage ! 🎨🖼️✨',
+                '🖼️'
+              )
+            }
+            className={`cursor-pointer select-none group transition-transform duration-300 hover:scale-105 ${
+              activeBounceFood === 'living_painting' ? 'animate-food-bounce' : ''
+            }`}
+          >
+            {/* Gilded Antique Frame with Golden Shimmer on Hover */}
+            <rect x="0" y="0" width="170" height="120" rx="8" fill="#78350f" stroke="#fbbf24" strokeWidth="4" className="group-hover:stroke-amber-300 transition-colors" />
             <rect x="8" y="8" width="154" height="104" rx="4" fill="#fef3c7" />
             
-            {/* Watercolor Canvas Artwork */}
-            <g>
+            {/* Moving Watercolor Canvas Artwork */}
+            <g clipPath="url(#paintingClip)">
               <rect x="12" y="12" width="146" height="96" fill="url(#paintingSky)" rx="2" />
+              
               {/* Distant mountains */}
               <polygon points="12,75 50,45 90,75" fill="#a7f3d0" opacity="0.7" />
               <polygon points="70,75 115,40 158,75" fill="#6ee7b7" opacity="0.6" />
+              
+              {/* Moving Cloud 1 (Drifting across sky) */}
+              <g className="animate-fairy-flutter" opacity="0.85">
+                <ellipse cx="65" cy="28" rx="14" ry="6" fill="#ffffff" />
+                <circle cx="60" cy="25" r="7" fill="#ffffff" />
+                <circle cx="70" cy="26" r="6" fill="#ffffff" />
+              </g>
+
+              {/* Moving Cloud 2 (Distant gentle drift) */}
+              <g className="animate-banner-sway" opacity="0.65">
+                <ellipse cx="125" cy="36" rx="10" ry="4.5" fill="#ffffff" />
+                <circle cx="122" cy="34" r="5" fill="#ffffff" />
+                <circle cx="129" cy="35" r="4.5" fill="#ffffff" />
+              </g>
+
+              {/* Soaring Mini Birds in the Painted Sky */}
+              <g className="animate-fairy-wing" opacity="0.75">
+                <path d="M78 38 Q82 34 86 38 Q90 34 94 38" stroke="#047857" strokeWidth="1.2" fill="none" strokeLinecap="round" />
+                <path d="M92 32 Q95 29 98 32 Q101 29 104 32" stroke="#047857" strokeWidth="1" fill="none" strokeLinecap="round" />
+              </g>
+
               {/* Rolling green hills */}
               <path d="M12 85 Q70 65 158 80 L158 108 L12 108 Z" fill="#10b981" opacity="0.8" />
               <path d="M12 92 Q90 80 158 95 L158 108 L12 108 Z" fill="#047857" opacity="0.9" />
+
+              {/* Swaying Meadow Flowers in the Painting */}
+              <g className="animate-banner-sway">
+                <circle cx="28" cy="96" r="1.8" fill="#f43f5e" />
+                <circle cx="45" cy="98" r="1.8" fill="#fbbf24" />
+                <circle cx="68" cy="94" r="1.8" fill="#f472b6" />
+                <circle cx="88" cy="100" r="1.8" fill="#fef08a" />
+              </g>
+
               {/* Cozy Cottage in the painting */}
               <polygon points="100,68 120,52 140,68" fill="#b45309" />
               <rect x="105" y="68" width="30" height="22" fill="#fed7aa" />
               <rect x="115" y="76" width="10" height="14" fill="#78350f" />
-              <circle cx="110" cy="74" r="3" fill="#fef08a" />
-              {/* Radiating mini sun */}
-              <circle cx="35" cy="30" r="10" fill="#fde047" opacity="0.9" />
+              <circle cx="110" cy="74" r="3" fill="#fef08a" className="animate-pulse" />
+
+              {/* Living Chimney Smoke Puffs Rising into the sky */}
+              <g className="animate-pulse">
+                <circle cx="132" cy="48" r="3" fill="#ffffff" opacity="0.75" />
+                <circle cx="135" cy="42" r="4.2" fill="#ffffff" opacity="0.55" />
+                <circle cx="138" cy="35" r="5.5" fill="#ffffff" opacity="0.35" />
+              </g>
+
+              {/* Radiating Animated Living Sun with Spinning Halo */}
+              <g transform="translate(35, 30)">
+                <circle cx="0" cy="0" r="14" fill="#fef08a" opacity="0.4" className="animate-pulse" />
+                <circle cx="0" cy="0" r="9" fill="#fde047" />
+                {/* Rotating Solar Rays */}
+                <g className="animate-spin-slow">
+                  <line x1="0" y1="-12" x2="0" y2="-15" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="0" y1="12" x2="0" y2="15" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="-12" y1="0" x2="-15" y2="0" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="12" y1="0" x2="15" y2="0" stroke="#f59e0b" strokeWidth="1.5" strokeLinecap="round" />
+                  <line x1="-8.5" y1="-8.5" x2="-11" y2="-11" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round" />
+                  <line x1="8.5" y1="8.5" x2="11" y2="11" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round" />
+                  <line x1="8.5" y1="-8.5" x2="11" y2="-11" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round" />
+                  <line x1="-8.5" y1="8.5" x2="-11" y2="11" stroke="#f59e0b" strokeWidth="1.2" strokeLinecap="round" />
+                </g>
+              </g>
             </g>
-            {/* Label below painting */}
-            <rect x="60" y="112" width="50" height="7" rx="2" fill="#fbbf24" opacity="0.8" />
+
+            {/* Brass Nameplate below painting: "The Quiet Dawn" */}
+            <rect x="52" y="111" width="66" height="8" rx="2" fill="#fbbf24" stroke="#78350f" strokeWidth="0.8" />
+            <text x="85" y="117" fontSize="5" fontWeight="bold" fill="#78350f" textAnchor="middle" fontFamily="serif">The Quiet Dawn 🎨</text>
           </g>
 
           {/* Castle Wall Sconces - Now radiating Dancing Musical Notes instead of Fire! 🎵🎶✨ */}
@@ -1258,6 +1331,71 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
             <path d="M-2 19 Q0 22 2 19" stroke="#15803d" strokeWidth="1.2" fill="none" />
           </g>
 
+          {/* SPRITE GUEST 4: GBEAR'S CAMEO (The Golden Bear Plush waving happily in the celebration background! 🧸👋✨) */}
+          <g
+            id="guest-gbear-cameo"
+            transform="translate(1010, 470)"
+            className="cursor-pointer pointer-events-auto"
+            onClick={(e) => handleFoodClick(e, 'gbear', 'GBear waves cheerfully at Wendy from the celebration! 🧸💛', 'GBear salue chaleureusement Wendy à la fête ! 🧸💛', '🧸')}
+          >
+            {/* Soft Warm Honey Glow around GBear */}
+            <circle cx="25" cy="35" r="32" fill="#fbbf24" opacity="0.25" className="animate-pulse" filter="blur(6px)" />
+            
+            {/* GBear Whole Sprite with Cameo Waving Animation */}
+            <g className="animate-gbear-wave">
+              {/* Chubby Golden Body */}
+              <ellipse cx="25" cy="50" rx="16" ry="14" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              
+              {/* Cozy Red T-shirt */}
+              <path d="M12 44 Q25 39 38 44 L36 56 Q25 58 14 56 Z" fill="#ef4444" stroke="#b91c1c" strokeWidth="1" />
+              <path d="M18 42 Q25 46 32 42" stroke="#b91c1c" strokeWidth="0.8" fill="none" />
+              
+              {/* Round Bear Ears */}
+              <circle cx="13" cy="20" r="5.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              <circle cx="13" cy="20" r="2.8" fill="#fef08a" />
+              <circle cx="37" cy="20" r="5.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              <circle cx="37" cy="20" r="2.8" fill="#fef08a" />
+              
+              {/* Round Bear Head */}
+              <ellipse cx="25" cy="28" rx="14" ry="12" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              
+              {/* Round Muzzle */}
+              <ellipse cx="25" cy="31" rx="7.5" ry="5.5" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.8" />
+              
+              {/* Cute Button Nose */}
+              <ellipse cx="25" cy="29" rx="2.2" ry="1.6" fill="#18181b" />
+              <circle cx="24.4" cy="28.4" r="0.6" fill="#ffffff" />
+              
+              {/* Teddy Smile */}
+              <path d="M25 31 L25 33" stroke="#78350f" strokeWidth="0.8" />
+              <path d="M21 32.5 Q25 35.5 29 32.5" stroke="#78350f" strokeWidth="1" strokeLinecap="round" fill="none" />
+              
+              {/* Rosy Cheeks */}
+              <ellipse cx="16" cy="31" rx="2.5" ry="1.8" fill="#fb7185" opacity="0.7" />
+              <ellipse cx="34" cy="31" rx="2.5" ry="1.8" fill="#fb7185" opacity="0.7" />
+              
+              {/* Sparkling Eyes */}
+              <circle cx="20" cy="25" r="1.8" fill="#0f172a" />
+              <circle cx="20.6" cy="24.4" r="0.6" fill="#ffffff" />
+              <circle cx="30" cy="25" r="1.8" fill="#0f172a" />
+              <circle cx="30.6" cy="24.4" r="0.6" fill="#ffffff" />
+              
+              {/* Left Rested Paw */}
+              <ellipse cx="15" cy="50" rx="4.5" ry="4" fill="#facc15" stroke="#ca8a04" strokeWidth="0.8" />
+              
+              {/* Right Raised Waving Paw */}
+              <g className="animate-bear-paw-wave" style={{ transformOrigin: '36px 42px' }}>
+                <ellipse cx="38" cy="36" rx="5" ry="4.5" fill="#facc15" stroke="#ca8a04" strokeWidth="0.9" />
+                <ellipse cx="38" cy="36" rx="2.5" ry="2" fill="#fef08a" />
+              </g>
+              
+              {/* Sparkling Magic Cameo Stardust */}
+              <circle cx="8" cy="16" r="1.5" fill="#fde047" className="animate-ping" />
+              <circle cx="42" cy="18" r="1.2" fill="#ffffff" className="animate-pulse" />
+              <polygon points="44,48 45,50 47,50 45,52 46,54 44,52 42,54 43,52 41,50 43,50" fill="#fbbf24" className="animate-pulse" />
+            </g>
+          </g>
+
           {/* FEAST ITEMS ALONG TABLE (Interactive onClick with subtle light glow & scale animation) */}
           
           {/* 1. French Baguettes in basket */}
@@ -1398,6 +1536,68 @@ export const ScenicBackground: React.FC<ScenicBackgroundProps> = ({
             <ellipse cx="1060" cy="583" rx="30" ry="8" fill="#fde68a" />
             <ellipse cx="1060" cy="578" rx="30" ry="8" fill="#fde68a" />
             <ellipse cx="1060" cy="574" rx="16" ry="5" fill="#991b1b" />
+          </g>
+
+          {/* 8. GBEAR PERMANENT CAMEO AT THE CELEBRATION TABLE 🧸👋✨ */}
+          <g
+            id="feast-gbear-cameo"
+            className={`cursor-pointer transition-transform duration-300 ${activeBounceFood === 'gbear' ? 'scale-125 origin-center' : 'hover:scale-110'}`}
+            onClick={(e) => handleFoodClick(e, 'gbear', 'GBear waves happily with honey on his paws! 🧸🍯✨', 'GBear fait un joyeux coucou avec du miel sur ses pattes ! 🧸🍯✨', '🧸')}
+            transform="translate(1160, 540)"
+          >
+            {/* Warm Golden Honey Glow */}
+            <circle cx="0" cy="0" r="46" fill="url(#foodHaloGlow)" opacity="0.9" className="animate-pulse" />
+            {/* Drop shadow on table runner */}
+            <ellipse cx="0" cy="42" rx="28" ry="8" fill="#020104" opacity="0.35" />
+            {/* Feet */}
+            <ellipse cx="-14" cy="38" rx="9" ry="6.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+            <ellipse cx="-14" cy="37.5" rx="5.5" ry="4" fill="#fef08a" />
+            <ellipse cx="14" cy="38" rx="9" ry="6.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+            <ellipse cx="14" cy="37.5" rx="5.5" ry="4" fill="#fef08a" />
+            {/* Body */}
+            <ellipse cx="0" cy="18" rx="25" ry="22" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+            <ellipse cx="0" cy="20" rx="17" ry="15" fill="#fef08a" opacity="0.7" />
+            {/* Red Vest */}
+            <path d="-20 10 Q0 3 20 10 L17 25 Q0 29 -17 25 Z" fill="#ef4444" stroke="#b91c1c" strokeWidth="1.2" />
+            {/* Ears */}
+            <g className="animate-bear-ear-left">
+              <circle cx="-16" cy="-18" r="8" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+              <circle cx="-16" cy="-18" r="4" fill="#fef08a" />
+            </g>
+            <g className="animate-bear-ear-right">
+              <circle cx="16" cy="-18" r="8" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+              <circle cx="16" cy="-18" r="4" fill="#fef08a" />
+            </g>
+            {/* Head */}
+            <ellipse cx="0" cy="-6" rx="22" ry="19" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+            {/* Muzzle */}
+            <ellipse cx="0" cy="-2" rx="10.5" ry="8" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.9" />
+            {/* Nose */}
+            <ellipse cx="0" cy="-5" rx="3" ry="2.2" fill="#18181b" />
+            <circle cx="-0.8" cy="-5.8" r="0.8" fill="#ffffff" />
+            {/* Smile */}
+            <path d="M0 -3 L0 0" stroke="#78350f" strokeWidth="1" />
+            <path d="M-5 -0.5 Q0 3.5 5 -0.5" stroke="#78350f" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+            {/* Rosy Cheeks */}
+            <ellipse cx="-13" cy="-2" rx="3.5" ry="2.5" fill="#fb7185" opacity="0.7" />
+            <ellipse cx="13" cy="-2" rx="3.5" ry="2.5" fill="#fb7185" opacity="0.7" />
+            {/* Blinking Eyes */}
+            <g className="animate-bear-blink">
+              <circle cx="-7.5" cy="-9" r="2.5" fill="#0f172a" />
+              <circle cx="-6.8" cy="-9.8" r="0.8" fill="#ffffff" />
+              <circle cx="7.5" cy="-9" r="2.5" fill="#0f172a" />
+              <circle cx="8.2" cy="-9.8" r="0.8" fill="#ffffff" />
+            </g>
+            {/* Left Paw Resting */}
+            <ellipse cx="-13" cy="18" rx="6" ry="5.2" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+            {/* Right Paw - Waving Cheerfully at Wendy! 🧸👋 */}
+            <g className="animate-bear-paw-wave">
+              <ellipse cx="16" cy="10" rx="6.5" ry="5.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              <ellipse cx="16" cy="10" rx="3.5" ry="2.5" fill="#fef08a" />
+            </g>
+            {/* Sparkling Stars around GBear */}
+            <circle cx="-25" cy="-22" r="1.5" fill="#fef08a" className="animate-ping" />
+            <polygon points="22,32 23.5,35 26.5,35.5 24.5,37.5 25,40.5 22,39 19,40.5 19.5,37.5 17.5,35.5 20.5,35" fill="#fde047" className="animate-pulse" />
           </g>
         </svg>
       )}

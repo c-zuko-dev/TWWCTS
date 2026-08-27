@@ -175,7 +175,7 @@ export const LightMeter: React.FC<LightMeterProps> = ({
 
       {/* Expanded Light Capacity Details Popover Modal */}
       {isOpenDetails && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in pointer-events-auto">
+        <div className="fixed inset-0 z-[95] flex items-center justify-center p-4 bg-black/65 backdrop-blur-sm animate-fade-in pointer-events-auto">
           <div
             className="relative w-full max-w-lg rounded-3xl bg-gradient-to-b from-slate-950 via-slate-900 to-amber-950/95 border-2 border-amber-400/60 p-6 sm:p-7 shadow-[0_0_50px_rgba(251,191,36,0.4)] text-left font-serif animate-scale-up"
             onClick={(e) => e.stopPropagation()}

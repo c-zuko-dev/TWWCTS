@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { CharacterExpression, CharacterId } from '../types';
+import { CharacterExpression, CharacterId, Language } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
 
 interface CharacterPortraitProps {
@@ -9,6 +9,7 @@ interface CharacterPortraitProps {
   showSwwPin?: boolean;
   isSpeaking?: boolean;
   className?: string;
+  language?: Language;
 }
 
 export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
@@ -18,16 +19,175 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
   showSwwPin = false,
   isSpeaking = true,
   className = '',
+  language = 'en',
 }) => {
   const portraitRef = useRef<HTMLDivElement>(null);
   const [clickReaction, setClickReaction] = useState<{ text: string; emoji: string } | null>(null);
   const [isOrikBlushing, setIsOrikBlushing] = useState(false);
   const [isLanternGlowing, setIsLanternGlowing] = useState(false);
+  const [isWendyBlushing, setIsWendyBlushing] = useState(false);
   const [floatingNotes, setFloatingNotes] = useState<Array<{ id: number; symbol: string; left: number; top: number; delay: number }>>([]);
   const [isHeartbeating, setIsHeartbeating] = useState(false);
   const [eyeTrackingOffset, setEyeTrackingOffset] = useState({ x: 0, y: 0 });
   const [isSoftSighing, setIsSoftSighing] = useState(false);
+  const [isGBearBouncing, setIsGBearBouncing] = useState(false);
+  const [isGBearHiding, setIsGBearHiding] = useState(false);
+  const [isGBearBlinking, setIsGBearBlinking] = useState(false);
+  const [gbearHearts, setGBearHearts] = useState<Array<{ id: number; symbol: string; left: number; top: number; delay: number }>>([]);
+  const [gbearStars, setGBearStars] = useState<
+    Array<{
+      id: number;
+      symbol: string;
+      left: number;
+      top: number;
+      dx: number;
+      dy: number;
+      size: number;
+      color: string;
+      delay: number;
+      duration: number;
+      rotStart: number;
+      rotEnd: number;
+    }>
+  >([]);
   const prevExpressionRef = useRef<CharacterExpression>(expression);
+
+  // Randomized eye-blink loop for GBear while being held/presented using setTimeout to feel natural and alive
+  useEffect(() => {
+    const isHolding =
+      (characterId === 'witch' || characterId === 'human_witch') && expression === 'holding_gbear';
+    const isPresenting =
+      characterId === 'clown' && expression === 'gentleman_presenting_bear';
+
+    if (!isHolding && !isPresenting) {
+      setIsGBearBlinking(false);
+      return;
+    }
+
+    let blinkTimer: number;
+    let resetTimer: number;
+
+    const scheduleNextBlink = () => {
+      // Natural random delay between 2.2s and 5.5s
+      const nextDelay = 2200 + Math.random() * 3300;
+      blinkTimer = window.setTimeout(() => {
+        setIsGBearBlinking(true);
+        // Realistic blink closing duration (140ms - 180ms)
+        resetTimer = window.setTimeout(() => {
+          setIsGBearBlinking(false);
+          scheduleNextBlink();
+        }, 160);
+      }, nextDelay);
+    };
+
+    scheduleNextBlink();
+
+    return () => {
+      window.clearTimeout(blinkTimer);
+      window.clearTimeout(resetTimer);
+    };
+  }, [characterId, expression]);
+
+  // Random 5% chance event where GBear 'hides' his face in Wendy's hands for a second, then 'peeks out' with a small sparkle
+  useEffect(() => {
+    const isHolding =
+      (characterId === 'witch' || characterId === 'human_witch') && expression === 'holding_gbear';
+    if (!isHolding) {
+      setIsGBearHiding(false);
+      return;
+    }
+
+    const interval = window.setInterval(() => {
+      if (Math.random() < 0.05 && !isGBearBouncing && !isGBearHiding) {
+        setIsGBearHiding(true);
+        setTimeout(() => {
+          setIsGBearHiding(false);
+          audioSynth.playSoundEffect('magic_sparkle');
+          setClickReaction({
+            text:
+              language === 'fr'
+                ? 'GBear jette un coup d’œil timide et scintillant ! 🧸✨'
+                : 'GBear peeks out with a shy sparkle! 🧸✨',
+            emoji: '💛',
+          });
+          setTimeout(() => setClickReaction(null), 2400);
+        }, 1300);
+      }
+    }, 4000);
+
+    return () => window.clearInterval(interval);
+  }, [characterId, expression, isGBearBouncing, isGBearHiding]);
+
+  // Interactive GBear Teddy Squeak, Cheerful Golden Star Particle System & 3 Rapid Happy Hops
+  const handleGBearClick = (e?: React.MouseEvent) => {
+    if (e) {
+      e.stopPropagation();
+      e.preventDefault();
+    }
+    audioSynth.playGBearSqueak();
+    setIsGBearBouncing(true);
+    setTimeout(() => setIsGBearBouncing(false), 880);
+
+    const isWendy = characterId === 'human_witch' || characterId === 'witch';
+    const isClown = characterId === 'clown';
+    const originX = isWendy ? 50 : isClown ? 56 : 50;
+    const originY = isWendy ? 68 : isClown ? 64 : 60;
+
+    // 1. Tiny Golden Star Particle System radiating outwards
+    const starSymbols = ['★', '✦', '✧', '⭐', '✨', '⋆'];
+    const starColors = ['#fbbf24', '#fde047', '#fef08a', '#f59e0b', '#ffffff', '#ffd700'];
+
+    const newStars = Array.from({ length: 16 }).map((_, i) => {
+      const angle = (i / 16) * Math.PI * 2 + (Math.random() * 0.4 - 0.2);
+      const distance = 40 + Math.random() * 60;
+      const dx = Math.cos(angle) * distance;
+      const dy = Math.sin(angle) * distance - (18 + Math.random() * 24);
+      return {
+        id: Date.now() + i,
+        symbol: starSymbols[Math.floor(Math.random() * starSymbols.length)],
+        left: originX,
+        top: originY,
+        dx: Math.round(dx),
+        dy: Math.round(dy),
+        size: 9 + Math.floor(Math.random() * 10),
+        color: starColors[Math.floor(Math.random() * starColors.length)],
+        delay: Math.floor(Math.random() * 100),
+        duration: 950 + Math.floor(Math.random() * 450),
+        rotStart: Math.floor(Math.random() * 90) - 45,
+        rotEnd: Math.floor(Math.random() * 360) + 180,
+      };
+    });
+    setGBearStars(newStars);
+    setTimeout(() => setGBearStars([]), 1800);
+
+    // 2. Ascending floating hearts and plush honey symbols
+    const symbols = ['🧸', '💛', '✨', '🍯', '⭐', '💖'];
+    const newHearts = Array.from({ length: 6 }).map((_, i) => ({
+      id: Date.now() + 100 + i,
+      symbol: symbols[Math.floor(Math.random() * symbols.length)],
+      left: originX - 16 + Math.random() * 32,
+      top: originY - 10 + Math.random() * 20,
+      delay: i * 75,
+    }));
+    setGBearHearts(newHearts);
+    setTimeout(() => setGBearHearts([]), 2400);
+
+    const reactionMsg =
+      characterId === 'human_witch'
+        ? language === 'fr'
+          ? 'Wendy serre amoureusement GBear ! 🧸💛'
+          : 'Wendy lovingly hugs GBear! 🧸💛'
+        : characterId === 'clown'
+        ? language === 'fr'
+          ? 'Mélo présente GBear ! Pouêt ! 🧸✨'
+          : 'Mélo presents GBear! Squeak! 🧸✨'
+        : language === 'fr'
+        ? 'GBear couine et salue joyeusement ! 🧸👋✨'
+        : 'GBear squeaks & waves happily! 🧸👋✨';
+
+    setClickReaction({ text: reactionMsg, emoji: '🧸' });
+    setTimeout(() => setClickReaction(null), 2400);
+  };
 
   // Trigger randomized 'soft sigh' sound effect & gentle relief exhalation animation when Super Witch transitions from burdened/overwhelmed to calm/peaceful/gentle/relieved
   useEffect(() => {
@@ -79,31 +239,58 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
   const handleCharacterClick = () => {
     if (characterId === 'lezar') {
       audioSynth.playSoundEffect('lezar_meow');
-      setClickReaction({ text: 'Meow~ 🐾', emoji: '🐱' });
+      setClickReaction({ text: language === 'fr' ? 'Miaou~ 🐾' : 'Meow~ 🐾', emoji: '🐱' });
     } else if (characterId === 'orik') {
       audioSynth.playSoundEffect('orik_chirp');
       setIsOrikBlushing(true);
-      setClickReaction({ text: 'Aww~ (blushes) 🌱✨', emoji: '💚' });
+      setClickReaction({ text: language === 'fr' ? 'Oh... *rougit* 🌱✨' : 'Aww~ (blushes) 🌱✨', emoji: '💚' });
       setTimeout(() => setIsOrikBlushing(false), 2400);
     } else if (characterId === 'artisan') {
       const isHelped = expression === 'inspired' || expression === 'grateful' || expression === 'happy' || expression === 'warm' || expression === 'celebrating';
       if (isHelped) {
         audioSynth.playSoundEffect('vivienne_laugh');
-        setClickReaction({ text: 'Aha! Hahaha~ 💛🔥', emoji: '😄' });
+        setClickReaction({ text: language === 'fr' ? 'Aha ! Hahaha~ 💛🔥' : 'Aha! Hahaha~ 💛🔥', emoji: '😄' });
       } else {
         audioSynth.playSoundEffect('vivienne_cry');
-        setClickReaction({ text: 'Sniffle... *sobs quietly* 💧💔', emoji: '😢' });
+        setClickReaction({ text: language === 'fr' ? 'Snif... *sanglote doucement* 💧💔' : 'Sniffle... *sobs quietly* 💧💔', emoji: '😢' });
       }
     } else if (characterId === 'hypo') {
       audioSynth.playSoundEffect('hypo_squeak');
-      setClickReaction({ text: 'Squeak! *wiggles ears* 🦛💧', emoji: '✨' });
-    } else if (characterId === 'witch' || characterId === 'human_witch') {
+      setClickReaction({ text: language === 'fr' ? 'Pouêt ! *remue les oreilles* 🦛💧' : 'Squeak! *wiggles ears* 🦛💧', emoji: '✨' });
+    } else if (characterId === 'human_witch') {
+      if (expression === 'holding_gbear') {
+        handleGBearClick();
+        return;
+      }
+      // When Super Witch becomes Wendy, clicking her triggers cute giggles and a blushing smile
+      audioSynth.playSoundEffect('wendy_giggle');
+      setIsWendyBlushing(true);
+      setClickReaction({
+        text: language === 'fr' ? '« Coucou. Hi-hi *rires* » 🌸🥰' : '“Hi. Tee-hee *giggles*” 🌸🥰',
+        emoji: '💖',
+      });
+      setTimeout(() => setIsWendyBlushing(false), 2600);
+    } else if (characterId === 'witch') {
+      if (expression === 'holding_gbear') {
+        handleGBearClick();
+        return;
+      }
       // Super Witch clicked: Lantern flares with golden glow & celestial chime
       audioSynth.playLanternGlow();
       setIsLanternGlowing(true);
       setTimeout(() => setIsLanternGlowing(false), 2400);
-      setClickReaction({ text: 'The Sun Lantern flares with warm golden light! ☀️✨', emoji: '🌟' });
+      setClickReaction({
+        text:
+          language === 'fr'
+            ? 'La Lanterne Solaire rayonne d’une douce lumière dorée ! ☀️✨'
+            : 'The Sun Lantern flares with warm golden light! ☀️✨',
+        emoji: '🌟',
+      });
     } else if (characterId === 'clown') {
+      if (expression === 'gentleman_presenting_bear') {
+        handleGBearClick();
+        return;
+      }
       const isAbyssOrMad =
         expression === 'abyss_mad' ||
         expression === 'abyss_horror' ||
@@ -116,6 +303,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
           expression !== 'relic_smile' &&
           expression !== 'gentleman_theatrical' &&
           expression !== 'gentleman_soft' &&
+          expression !== 'gentleman_presenting_bear' &&
           expression !== 'gentleman_surprised' &&
           expression !== 'gentleman_normal');
 
@@ -124,7 +312,13 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
         audioSynth.playHeartbeat(1.3);
         setIsHeartbeating(true);
         setTimeout(() => setIsHeartbeating(false), 1200);
-        setClickReaction({ text: '♥ (a deep heartbeat echoes from the void) ♥', emoji: '🖤' });
+        setClickReaction({
+          text:
+            language === 'fr'
+              ? '♥ (un battement sourd résonne dans le vide) ♥'
+              : '♥ (a deep heartbeat echoes from the void) ♥',
+          emoji: '🖤',
+        });
       } else {
         // Reformed Mélo Clown clicked: Whimsical musical notes flourish & floating notes animation
         audioSynth.playClownMusicalNote();
@@ -138,7 +332,13 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
         }));
         setFloatingNotes(newNotes);
         setTimeout(() => setFloatingNotes([]), 2600);
-        setClickReaction({ text: '♪ Tra-la-la! A whimsical melody! 🎩✨', emoji: '🎶' });
+        setClickReaction({
+          text:
+            language === 'fr'
+              ? '♪ Tra-la-la ! Une mélodie enchanteresse ! 🎩✨'
+              : '♪ Tra-la-la! A whimsical melody! 🎩✨',
+          emoji: '🎶',
+        });
       }
     } else {
       audioSynth.playSoundEffect('magic_sparkle');
@@ -205,9 +405,9 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* Floating Character Click Popup */}
       {clickReaction && (
-        <div className="absolute top-2 right-4 z-40 pointer-events-none animate-bounce px-2.5 py-1 rounded-full bg-slate-900/90 text-amber-200 border border-amber-400/50 text-xs font-serif shadow-lg flex items-center gap-1">
+        <div className="absolute -top-3 sm:-top-1 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-bounce px-3 py-1.5 rounded-full bg-slate-950/95 text-amber-200 border-2 border-amber-400/80 text-xs sm:text-sm font-serif shadow-2xl flex items-center gap-1.5 max-w-[92vw] whitespace-nowrap">
           <span>{clickReaction.emoji}</span>
-          <span className="font-semibold">{clickReaction.text}</span>
+          <span className="font-semibold tracking-wide drop-shadow-sm">{clickReaction.text}</span>
         </div>
       )}
 
@@ -233,6 +433,57 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
         </div>
       )}
 
+      {/* Interactive GBear Heart & Sparkle Particle Burst */}
+      {gbearHearts.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible">
+          {gbearHearts.map((heart) => (
+            <span
+              key={heart.id}
+              className="absolute text-xl sm:text-2xl text-amber-300 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)] animate-bounce font-serif select-none"
+              style={{
+                left: `${heart.left}%`,
+                top: `${heart.top}%`,
+                animationDuration: '1.2s',
+                animationDelay: `${heart.delay}ms`,
+                transition: 'all 1.8s ease-out',
+                transform: 'translateY(-36px) scale(1.2)',
+              }}
+            >
+              {heart.symbol}
+            </span>
+          ))}
+        </div>
+      )}
+
+      {/* Interactive GBear Tiny Golden Star Particle System */}
+      {gbearStars.length > 0 && (
+        <div className="absolute inset-0 pointer-events-none z-30 overflow-visible">
+          {gbearStars.map((star) => (
+            <span
+              key={star.id}
+              className="absolute inline-block animate-gbear-star-emit font-serif select-none pointer-events-none"
+              style={
+                {
+                  left: `${star.left}%`,
+                  top: `${star.top}%`,
+                  fontSize: `${star.size}px`,
+                  color: star.color,
+                  textShadow: `0 0 6px ${star.color}, 0 0 12px #fbbf24`,
+                  '--star-dx': `${star.dx}px`,
+                  '--star-dy': `${star.dy}px`,
+                  '--star-delay': `${star.delay}ms`,
+                  '--star-duration': `${star.duration}ms`,
+                  '--star-rot-start': `${star.rotStart}deg`,
+                  '--star-rot-end': `${star.rotEnd}deg`,
+                } as React.CSSProperties
+              }
+            >
+              {star.symbol}
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Dark Lord Heartbeat Void Pulse Visual */}
       {isHeartbeating && (
         <div className="absolute inset-0 pointer-events-none z-30 flex items-center justify-center">
@@ -243,8 +494,8 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* WITCH PORTRAIT (MAGICAL) - REFINED ANATOMICAL PROPORTIONS & GRACEFUL POSTURE */}
       {characterId === 'witch' && (
-        <div className="relative w-64 h-80 sm:w-72 sm:h-96 flex items-end justify-center drop-shadow-2xl">
-          <svg viewBox="0 0 300 400" className="w-full h-full">
+        <div className="relative w-44 h-60 sm:w-56 sm:h-76 md:w-64 md:h-84 max-h-[38vh] sm:max-h-[44vh] flex items-end justify-center drop-shadow-2xl">
+          <svg viewBox="0 0 300 400" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="witchCloakGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#3d5a49" />
@@ -344,11 +595,11 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <circle cx="150" cy="226" r="4.5" fill="url(#brassGrad)" stroke="#78350f" strokeWidth="1" />
             <circle cx="150" cy="226" r="1.5" fill="#fef08a" />
 
-            {/* Optional SWW Pin on Scarf/Cloak */}
+            {/* Optional SWTW Pin on Scarf/Cloak */}
             {showSwwPin && (
               <g transform="translate(162, 230)" className="animate-glint-flash">
-                <circle cx="0" cy="0" r="7" fill="#fbbf24" stroke="#d97706" strokeWidth="1.2" />
-                <text x="0" y="2.5" fontSize="5" fontWeight="bold" fill="#78350f" textAnchor="middle" fontFamily="serif">SWW</text>
+                <circle cx="0" cy="0" r="7.5" fill="#fbbf24" stroke="#d97706" strokeWidth="1.2" />
+                <text x="0" y="2.2" fontSize="4.2" fontWeight="bold" fill="#78350f" textAnchor="middle" fontFamily="serif" letterSpacing="0.4">SWTW</text>
               </g>
             )}
 
@@ -572,8 +823,24 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* HUMAN WENDY (POST-SACRIFICE & EPILOGUE) - COHESIVE, ELEGANT PRINCESS & BIRTHDAY OUTFIT */}
       {characterId === 'human_witch' && (
-        <div className="relative w-64 h-80 sm:w-72 sm:h-96 flex items-end justify-center drop-shadow-2xl animate-princess-float">
-          <svg viewBox="0 0 300 400" className="w-full h-full">
+        <div
+          className={`relative w-44 h-60 sm:w-56 sm:h-76 md:w-64 md:h-84 max-h-[38vh] sm:max-h-[44vh] flex items-end justify-center drop-shadow-2xl animate-princess-float ${
+            expression === 'receiving_gbear' || expression === 'holding_gbear'
+              ? 'animate-wendy-shared-glow drop-shadow-[0_0_40px_rgba(251,191,36,0.75)]'
+              : ''
+          }`}
+        >
+          {/* Ambient Rising Stardust Motes for Shared Light / GBear Moment */}
+          {(expression === 'receiving_gbear' || expression === 'holding_gbear') && (
+            <div className="absolute inset-0 pointer-events-none overflow-hidden">
+              <div className="absolute bottom-16 left-1/4 w-3 h-3 rounded-full bg-amber-300 blur-[1px] animate-stardust-rise-1" />
+              <div className="absolute bottom-20 right-1/4 w-2.5 h-2.5 rounded-full bg-yellow-200 blur-[1px] animate-stardust-rise-2" />
+              <div className="absolute bottom-10 left-1/2 w-3.5 h-3.5 rounded-full bg-amber-400 blur-[1px] animate-stardust-rise-3" />
+              <div className="absolute bottom-24 left-1/3 w-2 h-2 rounded-full bg-rose-300 blur-[1px] animate-stardust-rise-2" />
+            </div>
+          )}
+
+          <svg viewBox="0 0 300 400" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="wendyDressSkirt" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#fbcfe8" />
@@ -597,11 +864,22 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                 <stop offset="100%" stopColor="#b45309" />
               </linearGradient>
               <radialGradient id="princessAuraGrad" cx="50%" cy="50%" r="50%">
-                <stop offset="0%" stopColor="#fef08a" stopOpacity="0.45" />
-                <stop offset="45%" stopColor="#f472b6" stopOpacity="0.25" />
+                <stop offset="0%" stopColor={expression === 'receiving_gbear' || expression === 'holding_gbear' ? '#fef08a' : '#fef08a'} stopOpacity={expression === 'receiving_gbear' || expression === 'holding_gbear' ? '0.75' : '0.45'} />
+                <stop offset="45%" stopColor={expression === 'receiving_gbear' || expression === 'holding_gbear' ? '#fbbf24' : '#f472b6'} stopOpacity={expression === 'receiving_gbear' || expression === 'holding_gbear' ? '0.45' : '0.25'} />
                 <stop offset="75%" stopColor="#c084fc" stopOpacity="0.12" />
                 <stop offset="100%" stopColor="#000000" stopOpacity="0" />
               </radialGradient>
+              {/* GBear Gradients */}
+              <linearGradient id="gbearFurGradWendy" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#fef08a" />
+                <stop offset="45%" stopColor="#facc15" />
+                <stop offset="100%" stopColor="#eab308" />
+              </linearGradient>
+              <linearGradient id="gbearRedShirtWendy" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#f87171" />
+                <stop offset="35%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#b91c1c" />
+              </linearGradient>
             </defs>
 
             {/* MAGICAL PRINCESS AURORA / CELESTIAL BACKLIGHT */}
@@ -661,7 +939,33 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <path d="M196 384 Q200 380 204 384" stroke="#4ade80" strokeWidth="1.5" fill="none" />
             </g>
 
-            {/* 4. SHOULDERS, PUFF SLEEVES & SLENDER ARMS */}
+            {/* 4. FITTED BODICE / VEST */}
+            <path
+              d="M106 226 C128 220, 172 220, 194 226 L184 274 C162 278, 138 278, 116 274 Z"
+              fill="url(#wendyBodice)"
+              stroke="#fbcfe8"
+              strokeWidth="1.2"
+            />
+            {/* Heart Warmth Glow Pulsing over Wendy's Chest during Bear Gift */}
+            {(expression === 'receiving_gbear' || expression === 'holding_gbear') && (
+              <circle cx="150" cy="254" r="18" fill="#fef08a" opacity="0.35" className="animate-wendy-heart-warmth" filter="blur(6px)" />
+            )}
+            {/* Golden Bodice Buttons */}
+            <circle cx="150" cy="242" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
+            <circle cx="150" cy="254" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
+            <circle cx="150" cy="266" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
+
+            {/* 5. DELICATE PETER PAN LACE COLLAR & ROSE RIBBON BOW */}
+            <ellipse cx="150" cy="224" rx="30" ry="11" fill="#ffffff" stroke="#fbcfe8" strokeWidth="1.2" />
+            {/* Scalloped lace hem */}
+            <path d="M124 226 Q128 232 134 228 Q140 234 150 230 Q160 234 166 228 Q172 232 176 226" stroke="#f43f5e" strokeWidth="1" fill="none" />
+            {/* Pink Satin Ribbon Bow */}
+            <polygon points="150,224 140,218 140,230" fill="#e11d48" />
+            <polygon points="150,224 160,218 160,230" fill="#e11d48" />
+            <circle cx="150" cy="224" r="3.2" fill="#fb7185" />
+            <path d="M149 226 Q144 240 138 246 M151 226 Q156 240 162 246" stroke="#e11d48" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+
+            {/* 6. PUFF SLEEVES */}
             {/* Left Puff Sleeve */}
             <path
               d="M108 226 C88 226, 78 238, 80 254 C82 266, 96 270, 108 262 C114 252, 114 236, 108 226 Z"
@@ -680,34 +984,156 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             />
             <ellipse cx="206" cy="260" rx="12" ry="4" fill="#ffffff" opacity="0.9" />
 
-            {/* Forearms resting gently */}
-            <path d="M92 262 Q88 290 112 305" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
-            <path d="M208 262 Q212 290 188 305" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
-            {/* Dainty clasped hands */}
-            <ellipse cx="140" cy="305" rx="7" ry="5" fill="#fed7aa" />
-            <ellipse cx="160" cy="305" rx="7" ry="5" fill="#fed7aa" />
+            {/* 7. ARMS, HANDS & GBEAR EMBRACE */}
+            {expression === 'holding_gbear' ? (
+              /* WENDY HOLDING GBEAR SECURELY IN HER TWO HANDS WITH MAGICAL WARMTH */
+              <g id="wendy-gbear-held">
+                {/* Wendy's Upper Arms descending gracefully from puff sleeves */}
+                <path d="M96 248 Q90 274 118 288" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
+                <path d="M204 248 Q210 274 182 288" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
 
-            {/* 5. FITTED BODICE / VEST */}
-            <path
-              d="M106 226 C128 220, 172 220, 194 226 L184 274 C162 278, 138 278, 116 274 Z"
-              fill="url(#wendyBodice)"
-              stroke="#fbcfe8"
-              strokeWidth="1.2"
-            />
-            {/* Golden Bodice Buttons */}
-            <circle cx="150" cy="242" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
-            <circle cx="150" cy="254" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
-            <circle cx="150" cy="266" r="2.2" fill="#fbbf24" stroke="#d97706" strokeWidth="0.8" />
+                {/* GBEAR ANCHOR: Hard-locked in SVG coordinates at (150, 274) with zero CSS translation interference */}
+                <g id="gbear-wendy-anchor" transform="translate(150, 274)">
+                  {/* Interactive & Animated Body: Centered precisely at (0, 0) relative to Wendy's hands */}
+                  <g
+                    onClick={handleGBearClick}
+                    className={`cursor-pointer select-none ${
+                      isGBearBouncing
+                        ? 'animate-gbear-happy-dance'
+                        : isGBearHiding
+                        ? 'animate-gbear-hide-peek'
+                        : 'animate-gbear-snuggle'
+                    }`}
+                  >
+                    {/* Glowing Golden Honey Aura */}
+                    <circle cx="0" cy="0" r="44" fill="#fbbf24" opacity="0.3" className="animate-pulse" filter="blur(8px)" />
 
-            {/* 6. DELICATE PETER PAN LACE COLLAR & ROSE RIBBON BOW */}
-            <ellipse cx="150" cy="224" rx="30" ry="11" fill="#ffffff" stroke="#fbcfe8" strokeWidth="1.2" />
-            {/* Scalloped lace hem */}
-            <path d="M124 226 Q128 232 134 228 Q140 234 150 230 Q160 234 166 228 Q172 232 176 226" stroke="#f43f5e" strokeWidth="1" fill="none" />
-            {/* Pink Satin Ribbon Bow */}
-            <polygon points="150,224 140,218 140,230" fill="#e11d48" />
-            <polygon points="150,224 160,218 160,230" fill="#e11d48" />
-            <circle cx="150" cy="224" r="3.2" fill="#fb7185" />
-            <path d="M149 226 Q144 240 138 246 M151 226 Q156 240 162 246" stroke="#e11d48" strokeWidth="1.8" strokeLinecap="round" fill="none" />
+                    {/* Plush Drop Shadow onto Wendy's Dress */}
+                    <ellipse cx="0" cy="36" rx="26" ry="6" fill="#000000" opacity="0.25" />
+
+                    {/* Chubby Little Teddy Feet Resting Snugly */}
+                    <ellipse cx="-15" cy="34" rx="9" ry="6.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+                    <ellipse cx="-15" cy="33.5" rx="5.5" ry="4" fill="#fef08a" />
+                    <ellipse cx="15" cy="34" rx="9" ry="6.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+                    <ellipse cx="15" cy="33.5" rx="5.5" ry="4" fill="#fef08a" />
+
+                    {/* Plush Round Chubby Body (Pooh proportions) */}
+                    <ellipse cx="0" cy="16" rx="26" ry="22" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1.2" />
+                    {/* Soft Warm Honey Tummy Highlight */}
+                    <ellipse cx="0" cy="18" rx="18" ry="15" fill="#fef08a" opacity="0.65" />
+
+                    {/* Cozy Red T-shirt / Vest with sweet stitched seam */}
+                    <path d="-21 7 Q0 1 21 7 L18 23 Q0 27 -18 23 Z" fill="url(#gbearRedShirtWendy)" stroke="#991b1b" strokeWidth="1.2" />
+                    <path d="-11 4 Q0 10 11 4" stroke="#7f1d1d" strokeWidth="1.2" fill="none" />
+
+                    {/* Round Teddy Bear Ears with Lively Twitches */}
+                    <g className="animate-bear-ear-left">
+                      <circle cx="-18" cy="-20" r="8.5" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1.2" />
+                      <circle cx="-18" cy="-20" r="4.5" fill="#fef08a" />
+                    </g>
+                    <g className="animate-bear-ear-right">
+                      <circle cx="18" cy="-20" r="8.5" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1.2" />
+                      <circle cx="18" cy="-20" r="4.5" fill="#fef08a" />
+                    </g>
+
+                    {/* Round Teddy Head */}
+                    <ellipse cx="0" cy="-9" rx="23" ry="20" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1.2" />
+
+                    {/* Round Muzzle / Snout */}
+                    <ellipse cx="0" cy="-4" rx="11.5" ry="9" fill="#fef08a" stroke="#ca8a04" strokeWidth="1" />
+
+                    {/* Cute Black Button Nose with Sheen */}
+                    <ellipse cx="0" cy="-7" rx="3.5" ry="2.6" fill="#18181b" />
+                    <circle cx="-1" cy="-8" r="0.9" fill="#ffffff" />
+
+                    {/* Stitched Teddy Smile */}
+                    <path d="M0 -4.5 L0 -1.5" stroke="#78350f" strokeWidth="1.2" />
+                    <path d="M-6 -2 Q0 2.5 6 -2" stroke="#78350f" strokeWidth="1.4" strokeLinecap="round" fill="none" />
+
+                    {/* Soft Rosy Cheeks */}
+                    <ellipse cx="-14" cy="-4" rx="3.8" ry="2.8" fill="#fb7185" opacity="0.75" />
+                    <ellipse cx="14" cy="-4" rx="3.8" ry="2.8" fill="#fb7185" opacity="0.75" />
+
+                    {/* Sparkling Dark Button Eyes with Randomized Alive setTimeout Blinking */}
+                    {isGBearBlinking ? (
+                      <g>
+                        <path d="M-11 -12 Q-8.5 -9.5 -6 -12" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                        <path d="M6 -12 Q8.5 -9.5 11 -12" stroke="#0f172a" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+                      </g>
+                    ) : (
+                      <g className="animate-bear-blink">
+                        <circle cx="-8.5" cy="-12" r="2.8" fill="#0f172a" />
+                        <circle cx="-7.5" cy="-13" r="0.9" fill="#ffffff" />
+                        <circle cx="8.5" cy="-12" r="2.8" fill="#0f172a" />
+                        <circle cx="9.5" cy="-13" r="0.9" fill="#ffffff" />
+                      </g>
+                    )}
+
+                    {/* Bear's Cute Stubby Paws Cuddling the Glowing Sun Spark */}
+                    <ellipse cx="-14" cy="16" rx="6.8" ry="5.8" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1" />
+                    <ellipse cx="14" cy="16" rx="6.8" ry="5.8" fill="url(#gbearFurGradWendy)" stroke="#ca8a04" strokeWidth="1" />
+
+                    {/* Glowing Sun Spark / Starlight Gem between GBear's Paws */}
+                    <g transform="translate(0, 16)">
+                      <circle cx="0" cy="0" r="11" fill="#fbbf24" opacity="0.65" className="animate-pulse" filter="blur(3px)" />
+                      <circle cx="0" cy="0" r="6" fill="#fef08a" className="animate-pulse" />
+                      <polygon points="0,-8 2.2,-2.2 8,0 2.2,2.2 0,8 -2.2,2.2 -8,0 -2.2,-2.2" fill="#ffffff" className="animate-spin-slow" />
+                    </g>
+
+                    {/* Persistent magical sparkles orbiting GBear */}
+                    <circle cx="-30" cy="-20" r="1.4" fill="#fef08a" className="animate-ping" />
+                    <circle cx="30" cy="-14" r="1.6" fill="#fde047" className="animate-glint-flash" />
+                    <polygon points="24,30 25.5,33 28.5,33.5 26.5,35.5 27,38.5 24,37 21,38.5 21.5,35.5 19.5,33.5 22.5,33" fill="#fde047" className="animate-pulse" />
+                  </g>
+                </g>
+
+                {/* WENDY'S TWO GENTLE HANDS & FOREARMS WRAPPING AROUND AND HOLDING GBEAR */}
+                {/* Wendy's Left Hand resting lovingly on the left side of GBear */}
+                <g>
+                  <path d="M96 250 Q96 280 120 288" stroke="#fed7aa" strokeWidth="8" strokeLinecap="round" fill="none" />
+                  <ellipse cx="120" cy="288" rx="9" ry="7" fill="#fed7aa" stroke="#fbcfe8" strokeWidth="0.8" transform="rotate(22 120 288)" />
+                  {/* Delicate Finger Contours */}
+                  <path d="M122 284 Q127 286 126 290" stroke="#f472b6" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.6" />
+                  <path d="M120 288 Q125 291 123 294" stroke="#f472b6" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.6" />
+                </g>
+
+                {/* Wendy's Right Hand resting lovingly on the right side of GBear */}
+                <g>
+                  <path d="M204 250 Q204 280 180 288" stroke="#fed7aa" strokeWidth="8" strokeLinecap="round" fill="none" />
+                  <ellipse cx="180" cy="288" rx="9" ry="7" fill="#fed7aa" stroke="#fbcfe8" strokeWidth="0.8" transform="rotate(-22 180 288)" />
+                  {/* Delicate Finger Contours */}
+                  <path d="M178 284 Q173 286 174 290" stroke="#f472b6" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.6" />
+                  <path d="M180 288 Q175 291 177 294" stroke="#f472b6" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.6" />
+                </g>
+
+                {/* Gentle under-cradle support arc */}
+                <path d="M120 292 Q150 310 180 292" stroke="#fed7aa" strokeWidth="4" strokeLinecap="round" opacity="0.8" fill="none" />
+              </g>
+            ) : expression === 'receiving_gbear' ? (
+              /* WENDY OPENING HER HANDS WITH GLOWING WONDER & RECEPTIVITY */
+              <g>
+                {/* Graceful Arms Reaching Forward */}
+                <path d="M92 262 Q90 282 120 292" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
+                <path d="M208 262 Q210 282 180 292" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
+                {/* Cupped open hands waiting to receive */}
+                <ellipse cx="126" cy="292" rx="8" ry="6" fill="#fed7aa" transform="rotate(-15 126 292)" />
+                <ellipse cx="174" cy="292" rx="8" ry="6" fill="#fed7aa" transform="rotate(15 174 292)" />
+                {/* Glowing Shared Light Sparkle in Wendy's Palms */}
+                <g transform="translate(150, 290)">
+                  <circle cx="0" cy="0" r="14" fill="#fde047" opacity="0.4" className="animate-pulse" filter="blur(4px)" />
+                  <polygon points="0,-8 2.5,-2.5 8,0 2.5,2.5 0,8 -2.5,2.5 -8,0 -2.5,-2.5" fill="#ffffff" className="animate-spin-slow" />
+                  <circle cx="0" cy="0" r="3" fill="#f59e0b" />
+                </g>
+              </g>
+            ) : (
+              /* Standard clasped hands */
+              <g>
+                <path d="M92 262 Q88 290 112 305" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
+                <path d="M208 262 Q212 290 188 305" stroke="#fed7aa" strokeWidth="9" strokeLinecap="round" fill="none" />
+                <ellipse cx="140" cy="305" rx="7" ry="5" fill="#fed7aa" />
+                <ellipse cx="160" cy="305" rx="7" ry="5" fill="#fed7aa" />
+              </g>
+            )}
 
             {/* 7. SOFT OVAL FACE */}
             <ellipse cx="150" cy="170" rx="36" ry="42" fill="#fed7aa" />
@@ -738,49 +1164,96 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <circle cx="178" cy="142" r="2" fill="#fda4af" />
             </g>
 
-            {/* 9. THE GOLDEN SWW HAIRPIN / CELESTIAL PIN (Only when received from Mélo Clown) */}
+            {/* 9. THE GOLDEN SWTW HAIRPIN / CELESTIAL PIN (Only when received from Mélo Clown) */}
             {showSwwPin && (
               <g id="wendy-sww-pin" className="animate-glint-flash">
-                {/* Outer Golden Glow */}
-                <circle cx="189" cy="142" r="14" fill="#fef08a" opacity="0.35" className="animate-pulse" />
-                {/* Gold Bar Pin */}
-                <rect x="173" y="133" width="32" height="17" rx="4.5" fill="url(#goldPinGrad)" stroke="#78350f" strokeWidth="1.2" />
-                {/* Engraved SWW Lettering */}
-                <text x="189" y="145.5" fontSize="9" fontWeight="900" fontFamily="serif" fill="#78350f" textAnchor="middle" letterSpacing="1">
-                  SWW
+                {/* Outer Warm Golden Aura */}
+                <circle cx="189" cy="142" r="16" fill="#fef08a" opacity="0.6" className="animate-pulse" filter="blur(2px)" />
+                <circle cx="189" cy="142" r="12" fill="#fbbf24" opacity="0.5" />
+                {/* Gold Bar Pin with Rich Opacity & Crisp Borders */}
+                <rect x="169" y="131" width="40" height="20" rx="5" fill="url(#goldPinGrad)" stroke="#78350f" strokeWidth="1.6" opacity="1" />
+                <rect x="171" y="133" width="36" height="16" rx="3.5" fill="#fde047" stroke="#b45309" strokeWidth="0.8" opacity="0.95" />
+                {/* Engraved Bold SWTW Lettering */}
+                <text x="189" y="145" fontSize="8" fontWeight="900" fontFamily="serif" fill="#78350f" textAnchor="middle" letterSpacing="0.8">
+                  SWTW
                 </text>
                 {/* Sparkling Starlight Ornament on Pin Corner */}
-                <polygon points="206,128 208,133 213,134 209,137 210,142 206,139 202,142 203,137 199,134 204,133" fill="#fef08a" stroke="#f59e0b" strokeWidth="0.8" />
-                <circle cx="206" cy="135" r="1.5" fill="#ffffff" />
+                <polygon points="208,126 210.5,132 216,133.5 211.5,137 213,143 208,139.5 203,143 204.5,137 200,133.5 205.5,132" fill="#ffffff" stroke="#f59e0b" strokeWidth="1" />
+                <circle cx="208" cy="135" r="2" fill="#ffffff" />
               </g>
             )}
 
             {/* 10. LIGHT GREEN EYES (Bright, gentle, emerald sparkle with natural eye blink & cursor tracking) */}
             <g className="animate-eye-blink">
               <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
-                <ellipse cx="137" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
-                <ellipse cx="163" cy="168" rx="4.8" ry="6.2" fill="#10b981" />
+                <ellipse cx="137" cy="168" rx={expression === 'receiving_gbear' ? 5.2 : 4.8} ry={expression === 'receiving_gbear' ? 6.8 : 6.2} fill="#10b981" />
+                <ellipse cx="163" cy="168" rx={expression === 'receiving_gbear' ? 5.2 : 4.8} ry={expression === 'receiving_gbear' ? 6.8 : 6.2} fill="#10b981" />
                 <ellipse cx="137" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
                 <ellipse cx="163" cy="168" rx="2.6" ry="3.8" fill="#064e3b" />
-                <circle cx="138.5" cy="165.5" r="2" fill="#ffffff" />
-                <circle cx="164.5" cy="165.5" r="2" fill="#ffffff" />
+                <circle cx="138.5" cy="165.5" r={expression === 'receiving_gbear' || expression === 'holding_gbear' ? 2.5 : 2} fill="#ffffff" />
+                <circle cx="164.5" cy="165.5" r={expression === 'receiving_gbear' || expression === 'holding_gbear' ? 2.5 : 2} fill="#ffffff" />
                 <circle cx="140" cy="170" r="1" fill="#a7f3d0" />
                 <circle cx="166" cy="170" r="1" fill="#a7f3d0" />
+                {/* Additional Starlight Sparkle in Eyes when Receiving GBear */}
+                {(expression === 'receiving_gbear' || expression === 'holding_gbear') && (
+                  <>
+                    <circle cx="135.5" cy="169" r="0.9" fill="#fef08a" />
+                    <circle cx="161.5" cy="169" r="0.9" fill="#fef08a" />
+                  </>
+                )}
               </g>
             </g>
 
-            {/* 11. SOFT ROSY CHEEKS */}
-            <ellipse cx="126" cy="178" rx="8" ry="5" fill="#f43f5e" opacity="0.3" />
-            <ellipse cx="174" cy="178" rx="8" ry="5" fill="#f43f5e" opacity="0.3" />
+            {/* 11. SOFT ROSY CHEEKS - Warm emotional flush & blush on click */}
+            <ellipse
+              cx="126"
+              cy="178"
+              rx={expression === 'receiving_gbear' || expression === 'holding_gbear' || isWendyBlushing ? 10.5 : 8}
+              ry={expression === 'receiving_gbear' || expression === 'holding_gbear' || isWendyBlushing ? 7 : 5}
+              fill="#f43f5e"
+              opacity={isWendyBlushing ? 0.8 : (expression === 'receiving_gbear' || expression === 'holding_gbear' ? 0.48 : 0.3)}
+            />
+            <ellipse
+              cx="174"
+              cy="178"
+              rx={expression === 'receiving_gbear' || expression === 'holding_gbear' || isWendyBlushing ? 10.5 : 8}
+              ry={expression === 'receiving_gbear' || expression === 'holding_gbear' || isWendyBlushing ? 7 : 5}
+              fill="#f43f5e"
+              opacity={isWendyBlushing ? 0.8 : (expression === 'receiving_gbear' || expression === 'holding_gbear' ? 0.48 : 0.3)}
+            />
+            {isWendyBlushing && (
+              <g className="animate-bounce font-serif text-pink-500">
+                <text x="110" y="170" fontSize="12">🌸</text>
+                <text x="175" y="170" fontSize="12">✨</text>
+              </g>
+            )}
 
             {/* 12. EYEBROWS */}
             <g stroke="#57534e" strokeWidth="2" strokeLinecap="round" fill="none">
-              <path d="M128 156 Q136 151 144 155" />
-              <path d="M156 155 Q164 151 172 156" />
+              {expression === 'receiving_gbear' ? (
+                /* Soft surprised/touched lifted arches */
+                <>
+                  <path d="M127 154 Q136 148 145 153" />
+                  <path d="M155 153 Q164 148 173 154" />
+                </>
+              ) : (
+                <>
+                  <path d="M128 156 Q136 151 144 155" />
+                  <path d="M156 155 Q164 151 172 156" />
+                </>
+              )}
             </g>
 
             {/* 13. RADIANT, WARM PRINCESS SMILE */}
-            <path d="M138 190 Q150 202 162 190" stroke="#e11d48" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            {expression === 'receiving_gbear' ? (
+              /* Soft 'ooh' touched smile */
+              <ellipse cx="150" cy="192" rx="4.5" ry="3.5" fill="#e11d48" opacity="0.9" />
+            ) : expression === 'holding_gbear' ? (
+              /* Deep, tender joyful smile */
+              <path d="M136 188 Q150 204 164 188" stroke="#e11d48" strokeWidth="3" strokeLinecap="round" fill="none" />
+            ) : (
+              <path d="M138 190 Q150 202 162 190" stroke="#e11d48" strokeWidth="2.8" strokeLinecap="round" fill="none" />
+            )}
           </svg>
         </div>
       )}
@@ -983,7 +1456,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* THE DARK LORD OF THE OBSIDIAN CHASM ("THE DARK CLOWN") */}
       {characterId === 'clown' && (
-        <div className="relative w-72 h-96 sm:w-88 sm:h-116 flex items-end justify-center drop-shadow-2xl">
+        <div className="relative w-56 h-76 sm:w-68 sm:h-92 max-h-[44vh] sm:max-h-[48vh] flex items-end justify-center drop-shadow-2xl">
           {/* ========================================================================= */}
           {/* 1. TRUE ABYSS FORM (Monstrous, ancient supernatural void entity) */}
           {/* ACTIVE THROUGHOUT THE ENTIRE ABYSS CHAPTER & JOURNEY UNTIL SUNRISE */}
@@ -993,6 +1466,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
            expression !== 'relic_smile' &&
            expression !== 'gentleman_theatrical' && 
            expression !== 'gentleman_soft' && 
+           expression !== 'gentleman_presenting_bear' &&
            expression !== 'gentleman_surprised' && 
            expression !== 'gentleman_normal' ? (
             <svg viewBox="0 0 380 500" className="w-full h-full">
@@ -1385,7 +1859,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                 <g style={{ transform: `translate(${eyeTrackingOffset.x}px, ${eyeTrackingOffset.y}px)`, transition: 'transform 0.12s ease-out' }}>
                   {/* Left Eye (in shadow) */}
                   <ellipse cx="152" cy="146" rx="4" ry="5.2" fill="#030206" />
-                  {expression === 'holding_cake' || expression === 'gentleman_soft' || expression === 'gentleman_surprised' ? (
+                  {expression === 'holding_cake' || expression === 'gentleman_soft' || expression === 'gentleman_presenting_bear' || expression === 'gentleman_surprised' ? (
                     <circle cx="153" cy="144" r="1" fill="#fef08a" opacity="0.8" />
                   ) : null}
 
@@ -1395,7 +1869,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                       <circle cx="188" cy="146" r="5.5" />
                       <circle cx="189.5" cy="144.5" r="1.8" fill="#ffffff" />
                     </g>
-                  ) : expression === 'gentleman_soft' ? (
+                  ) : expression === 'gentleman_soft' || expression === 'gentleman_presenting_bear' ? (
                     <g stroke="#09090b" strokeWidth="2" strokeLinecap="round" fill="none">
                       <path d="M181 146 Q188 141 195 146" />
                     </g>
@@ -1421,7 +1895,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                   <path d="M178 136 Q188 131 198 134" />
                 ) : expression === 'gentleman_surprised' ? (
                   <path d="M178 128 Q188 123 198 129" />
-                ) : expression === 'gentleman_soft' ? (
+                ) : expression === 'gentleman_soft' || expression === 'gentleman_presenting_bear' ? (
                   <path d="M178 137 Q188 134 198 137" />
                 ) : (
                   <path d="M178 136 Q189 130 198 135" />
@@ -1436,7 +1910,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               {/* MOUTH */}
               {expression === 'holding_cake' ? (
                 <path d="M154 174 Q170 184 186 174" stroke="#18181b" strokeWidth="2.4" strokeLinecap="round" fill="none" />
-              ) : expression === 'gentleman_soft' || expression === 'relic_smile' ? (
+              ) : expression === 'gentleman_soft' || expression === 'gentleman_presenting_bear' || expression === 'relic_smile' ? (
                 <path d="M154 172 Q170 182 186 172" stroke="#18181b" strokeWidth="2.2" strokeLinecap="round" fill="none" />
               ) : expression === 'gentleman_theatrical' ? (
                 <g>
@@ -1484,6 +1958,162 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                   <circle cx="82" cy="7" r="4" fill="#fde047" className="animate-candle-flame" />
                   <ellipse cx="12" cy="90" rx="10" ry="7" fill="#09080a" stroke="#1e293b" strokeWidth="1" />
                   <ellipse cx="128" cy="90" rx="10" ry="7" fill="#09080a" stroke="#1e293b" strokeWidth="1" />
+                </g>
+              ) : expression === 'gentleman_presenting_bear' ? (
+                /* MÉLO CLOWN CRADLING & PRESENTING THE MAGICAL YELLOW BEAR PLUSH (POOH LOOKALIKE) */
+                <g id="melo-presenting-gbear" transform="translate(170, 258)">
+                  {/* Glowing Honey Aura behind the plush */}
+                  <circle cx="0" cy="0" r="75" fill="#fbbf24" opacity="0.25" className="animate-pulse" filter="blur(16px)" />
+                  <circle cx="0" cy="0" r="50" fill="#fef08a" opacity="0.35" className="animate-pulse" filter="blur(8px)" />
+
+                  {/* Honey-Gold Spotlight Cone from above */}
+                  <polygon points="0,-180 -65,65 65,65" fill="url(#honeyAuraGlow)" opacity="0.28" className="animate-bear-spotlight" />
+
+                  {/* Mélo's Gentle Midnight Arms Reaching Out */}
+                  <path d="M-115 -15 Q-65 35 -30 22" stroke="#09080a" strokeWidth="16" strokeLinecap="round" fill="none" />
+                  <path d="M-115 -15 Q-65 35 -30 22" stroke="#1e0b36" strokeWidth="6" strokeLinecap="round" fill="none" opacity="0.5" />
+                  <path d="M115 -15 Q65 35 30 22" stroke="#09080a" strokeWidth="16" strokeLinecap="round" fill="none" />
+                  <path d="M115 -15 Q65 35 30 22" stroke="#1e0b36" strokeWidth="6" strokeLinecap="round" fill="none" opacity="0.5" />
+
+                  {/* THE YELLOW BEAR PLUSHIE (POOH BEAR LOOKALIKE) WITH MANIFEST POP-IN & ALIVE MOTION */}
+                  <g className="animate-bear-manifest">
+                    <g
+                      onClick={handleGBearClick}
+                      className={`cursor-pointer select-none ${
+                        isGBearBouncing ? 'animate-gbear-happy-dance' : 'animate-bear-wiggle'
+                      }`}
+                    >
+                      {/* Plush Drop Shadow */}
+                      <ellipse cx="0" cy="38" rx="34" ry="8" fill="#020104" opacity="0.4" />
+
+                      {/* Plush Little Stubby Feet */}
+                      <ellipse cx="-18" cy="34" rx="12" ry="8" fill="#eab308" stroke="#ca8a04" strokeWidth="1.2" />
+                      <ellipse cx="-18" cy="33" rx="7" ry="5" fill="#fde047" />
+                      <ellipse cx="18" cy="34" rx="12" ry="8" fill="#eab308" stroke="#ca8a04" strokeWidth="1.2" />
+                      <ellipse cx="18" cy="33" rx="7" ry="5" fill="#fde047" />
+
+                      {/* Plush Round Chubby Body */}
+                      <ellipse cx="0" cy="12" rx="33" ry="28" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+                      <ellipse cx="0" cy="14" rx="24" ry="20" fill="#fde047" />
+
+                      {/* Classic Cozy Red T-shirt / Vest */}
+                      <path d="-26 2 Q0 -6 26 2 L22 20 Q0 24 -22 20 Z" fill="#ef4444" stroke="#b91c1c" strokeWidth="1.5" />
+                      <path d="-14 -2 Q0 6 14 -2" stroke="#b91c1c" strokeWidth="1.5" fill="none" />
+                      <path d="-28 4 Q-30 12 -23 15 L-19 9 Z" fill="#dc2626" stroke="#991b1b" strokeWidth="1" />
+                      <path d="M28 4 Q30 12 23 15 L19 9 Z" fill="#dc2626" stroke="#991b1b" strokeWidth="1" />
+
+                      {/* Round Bear Ears with Playful Alive Ear Twitch/Wiggle */}
+                      <g className="animate-bear-ear-left">
+                        <circle cx="-23" cy="-40" r="10" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+                        <circle cx="-23" cy="-40" r="5.5" fill="#fef08a" />
+                      </g>
+                      <g className="animate-bear-ear-right">
+                        <circle cx="23" cy="-40" r="10" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+                        <circle cx="23" cy="-40" r="5.5" fill="#fef08a" />
+                      </g>
+
+                      {/* Round Bear Head */}
+                      <ellipse cx="0" cy="-24" rx="28" ry="24" fill="#facc15" stroke="#ca8a04" strokeWidth="1.5" />
+
+                      {/* Round Muzzle / Snout */}
+                      <ellipse cx="0" cy="-19" rx="14" ry="11" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
+
+                      {/* Cute Black Button Nose with Sheen */}
+                      <ellipse cx="0" cy="-23" rx="4" ry="3" fill="#18181b" />
+                      <circle cx="-1" cy="-24" r="1" fill="#ffffff" />
+
+                      {/* Stitched Teddy Smile */}
+                      <path d="M0 -20 L0 -16" stroke="#78350f" strokeWidth="1.4" />
+                      <path d="M-7 -17 Q0 -11 7 -17" stroke="#78350f" strokeWidth="1.6" strokeLinecap="round" fill="none" />
+
+                      {/* Soft Rosy Cheeks */}
+                      <ellipse cx="-17" cy="-19" rx="4" ry="3" fill="#fb7185" opacity="0.65" />
+                      <ellipse cx="17" cy="-19" rx="4" ry="3" fill="#fb7185" opacity="0.65" />
+
+                      {/* Sparkling Dark Button Eyes with Randomized Alive setTimeout Blinking */}
+                      {isGBearBlinking ? (
+                        <g>
+                          <path d="M-13 -29 Q-10 -26 -7 -29" stroke="#0f172a" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+                          <path d="M7 -29 Q10 -26 13 -29" stroke="#0f172a" strokeWidth="2.4" strokeLinecap="round" fill="none" />
+                        </g>
+                      ) : (
+                        <g className="animate-bear-blink">
+                          <circle cx="-10" cy="-29" r="3.2" fill="#0f172a" />
+                          <circle cx="-9" cy="-30" r="1.1" fill="#ffffff" />
+                          <circle cx="10" cy="-29" r="3.2" fill="#0f172a" />
+                          <circle cx="11" cy="-30" r="1.1" fill="#ffffff" />
+                        </g>
+                      )}
+
+                      {/* Friendly Soft Eyebrows */}
+                      <path d="-13 -34 Q-10 -36 -6 -34" stroke="#854d0e" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+                      <path d="M6 -34 Q10 -36 13 -34" stroke="#854d0e" strokeWidth="1.2" strokeLinecap="round" fill="none" />
+
+                      {/* Left Paw cradling the Glowing Starlight Sun Spark */}
+                      <ellipse cx="-18" cy="12" rx="8" ry="7" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" transform="rotate(20 -18 12)" />
+                      
+                      {/* Right Paw - Alive Animated Waving Hello! 🧸👋 */}
+                      <g className="animate-bear-paw-wave">
+                        <ellipse cx="20" cy="6" rx="8.5" ry="7" fill="#facc15" stroke="#ca8a04" strokeWidth="1.2" />
+                        <ellipse cx="20" cy="6" rx="4.5" ry="3.5" fill="#fef08a" opacity="0.8" />
+                      </g>
+
+                      {/* Glowing Sun Spark / Starlight Gem inside Bear's Paws */}
+                      <g transform="translate(-4, 12)">
+                        <circle cx="0" cy="0" r="14" fill="#fbbf24" opacity="0.5" className="animate-pulse" filter="blur(4px)" />
+                        <circle cx="0" cy="0" r="8" fill="#fef08a" className="animate-pulse" />
+                        <polygon points="0,-10 3,-3 10,0 3,3 0,10 -3,3 -10,0 -3,-3" fill="#ffffff" className="animate-spin-slow" />
+                        <circle cx="0" cy="0" r="2.5" fill="#f59e0b" />
+                      </g>
+
+                      {/* PERSISTENT ORBITING MAGICAL PARTICLES */}
+                      <g className="animate-particle-orbit-portrait-1">
+                        <polygon points="0,-3 2.5,0 0,3 -2.5,0" fill="#fde047" style={{ filter: 'drop-shadow(0 0 5px #fbbf24)' }} />
+                        <circle cx="0" cy="0" r="1.2" fill="#ffffff" />
+                      </g>
+                      <g className="animate-particle-orbit-portrait-2">
+                        <circle cx="0" cy="0" r="2" fill="#c084fc" style={{ filter: 'drop-shadow(0 0 4px #e879f9)' }} />
+                        <circle cx="0" cy="0" r="0.8" fill="#ffffff" />
+                      </g>
+
+                      {/* GOLDEN HONEY-DRIP PARTICLE TRAIL */}
+                      <g transform="translate(0, 30)">
+                        <g className="animate-honey-drip-1" transform="translate(-12, 0)">
+                          <circle cx="0" cy="10" r="2" fill="#fbbf24" />
+                          <circle cx="0.4" cy="9.6" r="0.6" fill="#ffffff" />
+                        </g>
+                        <g className="animate-honey-drip-2" transform="translate(10, 2)">
+                          <circle cx="0" cy="12" r="2.4" fill="#f59e0b" />
+                          <circle cx="0.5" cy="11.5" r="0.8" fill="#ffffff" />
+                        </g>
+                      </g>
+                    </g>
+                  </g>
+
+                  {/* Left & Right Slate Gloves supporting the bear directly */}
+                  <g>
+                    <ellipse cx="-30" cy="22" rx="12" ry="9" fill="#1e293b" stroke="#334155" strokeWidth="1.2" transform="rotate(-15 -30 22)" />
+                    <path d="M-28 17 Q-22 20 -24 26" stroke="#475569" strokeWidth="1.2" fill="none" />
+                  </g>
+                  <g>
+                    <ellipse cx="30" cy="22" rx="12" ry="9" fill="#1e293b" stroke="#334155" strokeWidth="1.2" transform="rotate(15 30 22)" />
+                    <path d="M28 17 Q22 20 24 26" stroke="#475569" strokeWidth="1.2" fill="none" />
+                  </g>
+                  <path d="M-30 25 Q0 42 30 25" stroke="#1e293b" strokeWidth="6" strokeLinecap="round" fill="none" />
+
+                  {/* Floating Golden & Violet Musical Sparks around the Gift */}
+                  <g className="animate-note-float-1" transform="translate(-95, -60)">
+                    <text x="0" y="0" fill="#fbbf24" fontSize="20" fontFamily="serif" opacity="0.9" style={{ filter: 'drop-shadow(0 0 6px #fde047)' }}>♪</text>
+                  </g>
+                  <g className="animate-note-float-2" transform="translate(70, -50)">
+                    <text x="0" y="0" fill="#fde047" fontSize="18" fontFamily="serif" opacity="0.9" style={{ filter: 'drop-shadow(0 0 6px #fbbf24)' }}>✨</text>
+                  </g>
+                  <g className="animate-note-float-3" transform="translate(-75, 10)">
+                    <text x="0" y="0" fill="#c084fc" fontSize="16" fontFamily="serif" opacity="0.85" style={{ filter: 'drop-shadow(0 0 4px #e879f9)' }}>♫</text>
+                  </g>
+                  <g className="animate-note-float-4" transform="translate(55, 15)">
+                    <text x="0" y="0" fill="#fbbf24" fontSize="16" fontFamily="serif" opacity="0.85">💛</text>
+                  </g>
                 </g>
               ) : expression === 'gentleman_theatrical' ? (
                 /* Distinguished Gentleman Tipping Hat */
@@ -1619,8 +2249,12 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <circle cx="132" cy="66" r="2" fill="#ecfdf5" stroke="#34d399" strokeWidth="0.5" className="animate-pulse" />
             <circle cx="68" cy="66" r="2" fill="#ecfdf5" stroke="#34d399" strokeWidth="0.5" className="animate-pulse" />
 
-            {/* Flower on Orik's head (Dry initially, blooms when helped/happy) */}
-            {expression === 'grateful' || expression === 'happy' || expression === 'inspired' ? (
+            {/* Flower on Orik's head (Dry initially, blooms when helped/happy/celebrating/credits) */}
+            {expression === 'grateful' ||
+            expression === 'happy' ||
+            expression === 'inspired' ||
+            expression === 'holding_sprout' ||
+            expression === 'celebrating' ? (
               <g transform="translate(100, 70)">
                 <line x1="0" y1="15" x2="0" y2="0" stroke="#15803d" strokeWidth="2.5" />
                 {/* Blooming Petals */}
@@ -1681,7 +2315,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       )}
 
       {/* VIVIENNE THE GLASSMAKER - PROPORTIONATE ARTISAN BODY */}
-      {characterId === 'artisan' && (
+      {(characterId === 'artisan' || characterId === 'vivienne') && (
         <div className="relative w-56 h-76 sm:w-64 sm:h-88 flex items-end justify-center drop-shadow-xl">
           <svg viewBox="0 0 240 320" className="w-full h-full">
             <defs>
@@ -1774,8 +2408,13 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <rect x="124" y="88" width="22" height="15" rx="5" fill="#b45309" stroke="#f59e0b" strokeWidth="1.8" />
             <line x1="116" y1="95" x2="124" y2="95" stroke="#f59e0b" strokeWidth="2" />
 
-            {/* ARTISAN HAT ON TOP OF HER HEAD (Given when helped / happy / inspired) */}
-            {(expression === 'inspired' || expression === 'grateful' || expression === 'happy') && (
+            {/* ARTISAN HAT ON TOP OF HER HEAD (Given in her final form: helped / happy / inspired / celebrating / holding_bottle / warm) */}
+            {(expression === 'inspired' ||
+              expression === 'grateful' ||
+              expression === 'happy' ||
+              expression === 'celebrating' ||
+              expression === 'holding_bottle' ||
+              expression === 'warm') && (
               <g id="vivienne-artisan-hat" transform="translate(120, 72)">
                 {/* Chic French Glassmaker Beret */}
                 <ellipse cx="0" cy="2" rx="34" ry="11" fill="#78350f" stroke="#451a03" strokeWidth="1.2" transform="rotate(-6)" />
@@ -1789,7 +2428,12 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             )}
 
             {/* Eyebrows based on emotion */}
-            {expression === 'inspired' || expression === 'grateful' || expression === 'happy' ? (
+            {expression === 'inspired' ||
+            expression === 'grateful' ||
+            expression === 'happy' ||
+            expression === 'celebrating' ||
+            expression === 'holding_bottle' ||
+            expression === 'warm' ? (
               <g stroke="#78350f" strokeWidth="2" strokeLinecap="round" fill="none">
                 <path d="M100 110 Q108 105 116 109" />
                 <path d="M124 109 Q132 105 140 110" />
@@ -1813,7 +2457,12 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             </g>
 
             {/* REALISTIC NATURAL TEARS STREAMING DOWN HER CHEEKS WHEN SAD (Before Helped) */}
-            {expression !== 'inspired' && expression !== 'grateful' && expression !== 'happy' && (
+            {expression !== 'inspired' &&
+              expression !== 'grateful' &&
+              expression !== 'happy' &&
+              expression !== 'celebrating' &&
+              expression !== 'holding_bottle' &&
+              expression !== 'warm' && (
               <g id="vivienne-sad-tears">
                 {/* Left Cheek Tear Stream */}
                 <g className="animate-tear-stream">
@@ -1831,7 +2480,12 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             )}
 
             {/* Rosy Cheeks when helped */}
-            {(expression === 'inspired' || expression === 'grateful' || expression === 'happy') && (
+            {(expression === 'inspired' ||
+              expression === 'grateful' ||
+              expression === 'happy' ||
+              expression === 'celebrating' ||
+              expression === 'holding_bottle' ||
+              expression === 'warm') && (
               <g>
                 <ellipse cx="102" cy="128" rx="5.5" ry="3.5" fill="#f43f5e" opacity="0.35" />
                 <ellipse cx="138" cy="128" rx="5.5" ry="3.5" fill="#f43f5e" opacity="0.35" />
@@ -1839,7 +2493,12 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             )}
 
             {/* Mouth: Happy Smile vs. Really Sad Downturned */}
-            {expression === 'inspired' || expression === 'grateful' || expression === 'happy' ? (
+            {expression === 'inspired' ||
+            expression === 'grateful' ||
+            expression === 'happy' ||
+            expression === 'celebrating' ||
+            expression === 'holding_bottle' ||
+            expression === 'warm' ? (
               <path d="M113 136 Q120 145 127 136" stroke="#b91c1c" strokeWidth="2.2" fill="none" strokeLinecap="round" />
             ) : (
               /* Really Sad Trembling Mouth */
@@ -1931,6 +2590,112 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             {/* Paws holding the pillow */}
             <ellipse cx="80" cy="190" rx="10" ry="8" fill="#94a3b8" transform="rotate(20 80 190)" />
             <ellipse cx="160" cy="190" rx="10" ry="8" fill="#94a3b8" transform="rotate(-20 160 190)" />
+          </svg>
+        </div>
+      )}
+
+      {/* GBEAR THE PLUSH TEDDY BEAR (STANDALONE PORTRAIT) */}
+      {characterId === 'gbear' && (
+        <div
+          className={`relative w-48 h-56 sm:w-56 sm:h-64 flex items-end justify-center drop-shadow-2xl cursor-pointer select-none transition-transform duration-300 hover:scale-105 ${
+            isGBearBouncing ? 'animate-gbear-bounce-click' : 'animate-bear-wiggle'
+          }`}
+          onClick={handleGBearClick}
+          title="Click GBear to hear his magical giggle & see him hop!"
+        >
+          <svg viewBox="0 0 200 220" className="w-full h-full">
+            <defs>
+              <linearGradient id="gbearFurStandalone" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#fef08a" />
+                <stop offset="30%" stopColor="#facc15" />
+                <stop offset="80%" stopColor="#eab308" />
+                <stop offset="100%" stopColor="#ca8a04" />
+              </linearGradient>
+              <linearGradient id="gbearShirtStandalone" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stopColor="#f87171" />
+                <stop offset="60%" stopColor="#ef4444" />
+                <stop offset="100%" stopColor="#b91c1c" />
+              </linearGradient>
+              <radialGradient id="gbearHoneyAuraStandalone" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stopColor="#fef08a" stopOpacity="0.8" />
+                <stop offset="40%" stopColor="#facc15" stopOpacity="0.4" />
+                <stop offset="80%" stopColor="#ca8a04" stopOpacity="0.1" />
+                <stop offset="100%" stopColor="#000000" stopOpacity="0" />
+              </radialGradient>
+            </defs>
+
+            {/* Glowing Honey Aura */}
+            <circle cx="100" cy="115" r="85" fill="url(#gbearHoneyAuraStandalone)" className="animate-pulse" />
+
+            {/* Little Feet */}
+            <ellipse cx="70" cy="190" rx="18" ry="12" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.2" />
+            <ellipse cx="70" cy="189" rx="10" ry="7" fill="#fef08a" />
+            <ellipse cx="130" cy="190" rx="18" ry="12" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.2" />
+            <ellipse cx="130" cy="189" rx="10" ry="7" fill="#fef08a" />
+
+            {/* Round Chubby Body */}
+            <ellipse cx="100" cy="148" rx="46" ry="40" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.5" />
+            {/* Warm Belly Highlight */}
+            <ellipse cx="100" cy="154" rx="30" ry="26" fill="#fef08a" opacity="0.65" />
+
+            {/* Cozy Red T-shirt */}
+            <path d="M62 130 Q100 120 138 130 L132 162 Q100 168 68 162 Z" fill="url(#gbearShirtStandalone)" stroke="#991b1b" strokeWidth="1.5" />
+            <path d="M78 126 Q100 134 122 126" stroke="#7f1d1d" strokeWidth="1.5" fill="none" />
+
+            {/* Left Arm / Paw */}
+            <ellipse cx="58" cy="148" rx="12" ry="10" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.2" transform="rotate(-15 58 148)" />
+
+            {/* Right Arm / Paw (Animated Waving Paw!) */}
+            <g className="animate-bear-paw-wave" style={{ transformOrigin: '142px 140px' }}>
+              <ellipse cx="142" cy="130" rx="14" ry="11" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.2" />
+              <ellipse cx="142" cy="130" rx="7" ry="5.5" fill="#fef08a" />
+            </g>
+
+            {/* Round Bear Ears */}
+            <g className="animate-bear-ear-left" style={{ transformOrigin: '68px 65px' }}>
+              <circle cx="68" cy="65" r="17" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.5" />
+              <circle cx="68" cy="65" r="9" fill="#fef08a" />
+            </g>
+            <g className="animate-bear-ear-right" style={{ transformOrigin: '132px 65px' }}>
+              <circle cx="132" cy="65" r="17" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.5" />
+              <circle cx="132" cy="65" r="9" fill="#fef08a" />
+            </g>
+
+            {/* Round Bear Head */}
+            <ellipse cx="100" cy="85" rx="42" ry="36" fill="url(#gbearFurStandalone)" stroke="#ca8a04" strokeWidth="1.5" />
+
+            {/* Muzzle */}
+            <ellipse cx="100" cy="94" rx="20" ry="15" fill="#fef08a" stroke="#ca8a04" strokeWidth="1.2" />
+
+            {/* Black Button Nose */}
+            <ellipse cx="100" cy="88" rx="6" ry="4.5" fill="#18181b" />
+            <ellipse cx="98" cy="86.5" rx="2" ry="1.2" fill="#ffffff" />
+
+            {/* Cheerful Smile */}
+            <path d="M92 98 Q100 105 108 98" stroke="#78350f" strokeWidth="2.2" strokeLinecap="round" fill="none" />
+
+            {/* Rosy Cheeks */}
+            <ellipse cx="78" cy="94" rx="7" ry="4.5" fill="#fb7185" opacity="0.7" />
+            <ellipse cx="122" cy="94" rx="7" ry="4.5" fill="#fb7185" opacity="0.7" />
+
+            {/* Blinking Eyes */}
+            <g className="animate-bear-blink">
+              <ellipse cx="88" cy="78" rx="4.5" ry="5.5" fill="#0f172a" />
+              <circle cx="89.5" cy="76" r="1.6" fill="#ffffff" />
+              <ellipse cx="112" cy="78" rx="4.5" ry="5.5" fill="#0f172a" />
+              <circle cx="113.5" cy="76" r="1.6" fill="#ffffff" />
+            </g>
+
+            {/* Sparkling Golden Star in Paw */}
+            <g transform="translate(155, 115)">
+              <circle cx="0" cy="0" r="12" fill="#fbbf24" opacity="0.5" className="animate-pulse" filter="blur(3px)" />
+              <polygon points="0,-9 2.5,-2.5 9,0 2.5,2.5 0,9 -2.5,2.5 -9,0 -2.5,-2.5" fill="#fef08a" className="animate-spin-slow" />
+              <circle cx="0" cy="0" r="2" fill="#ffffff" />
+            </g>
+
+            {/* Ambient Sparkles */}
+            <polygon points="45,45 47,50 52,51 48,54 49,59 45,56 41,59 42,54 38,51 43,50" fill="#fde047" className="animate-pulse" />
+            <circle cx="160" cy="60" r="2.5" fill="#fef08a" className="animate-ping" />
           </svg>
         </div>
       )}
@@ -2030,6 +2795,60 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <path d="M62 142 Q70 150 78 142" stroke="#e11d48" strokeWidth="2.2" strokeLinecap="round" fill="none" />
               {/* Cozy Orange Sweater */}
               <path d="M30 310 Q70 155 110 310 Z" fill="url(#ensWendySweater)" />
+            </g>
+
+            {/* 3b. GBEAR THE PLUSH (Joyfully waving in background beside Wendy) 🧸👋✨ */}
+            <g
+              transform="translate(252, 92)"
+              onClick={handleGBearClick}
+              className={`cursor-pointer select-none transition-transform duration-300 hover:scale-110 ${
+                isGBearBouncing ? 'animate-gbear-bounce-click' : 'animate-bear-wiggle'
+              }`}
+              style={{ transformOrigin: '24px 30px' }}
+            >
+              {/* Ambient Golden Glow */}
+              <circle cx="24" cy="24" r="24" fill="#fbbf24" opacity="0.25" className="animate-pulse" filter="blur(6px)" />
+              {/* Round Chubby Body */}
+              <ellipse cx="24" cy="38" rx="17" ry="15" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              {/* Cozy Red T-shirt */}
+              <path d="M11 32 Q24 28 37 32 L35 42 Q24 45 13 42 Z" fill="#ef4444" stroke="#b91c1c" strokeWidth="1" />
+              {/* Round Bear Ears with Wiggle */}
+              <g className="animate-bear-ear-left">
+                <circle cx="12" cy="14" r="5.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+                <circle cx="12" cy="14" r="2.8" fill="#fef08a" />
+              </g>
+              <g className="animate-bear-ear-right">
+                <circle cx="36" cy="14" r="5.5" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+                <circle cx="36" cy="14" r="2.8" fill="#fef08a" />
+              </g>
+              {/* Round Bear Head */}
+              <ellipse cx="24" cy="22" rx="15" ry="13" fill="#facc15" stroke="#ca8a04" strokeWidth="1" />
+              {/* Muzzle */}
+              <ellipse cx="24" cy="25" rx="7.5" ry="6" fill="#fef08a" stroke="#ca8a04" strokeWidth="0.8" />
+              {/* Nose */}
+              <ellipse cx="24" cy="23" rx="2.2" ry="1.6" fill="#18181b" />
+              {/* Smile */}
+              <path d="M20 26.5 Q24 29.5 28 26.5" stroke="#78350f" strokeWidth="1" strokeLinecap="round" fill="none" />
+              {/* Rosy Cheeks */}
+              <ellipse cx="15" cy="25" rx="2.5" ry="1.8" fill="#fb7185" opacity="0.7" />
+              <ellipse cx="33" cy="25" rx="2.5" ry="1.8" fill="#fb7185" opacity="0.7" />
+              {/* Blinking Eyes */}
+              <g className="animate-bear-blink">
+                <circle cx="19" cy="20" r="1.8" fill="#0f172a" />
+                <circle cx="19.5" cy="19.5" r="0.6" fill="#ffffff" />
+                <circle cx="29" cy="20" r="1.8" fill="#0f172a" />
+                <circle cx="29.5" cy="19.5" r="0.6" fill="#ffffff" />
+              </g>
+              {/* Left Paw Resting */}
+              <ellipse cx="13" cy="38" rx="4.5" ry="3.8" fill="#facc15" stroke="#ca8a04" strokeWidth="0.8" />
+              {/* Right Paw - Waving Hello to everyone! 🧸👋 */}
+              <g className="animate-bear-paw-wave">
+                <ellipse cx="37" cy="28" rx="5" ry="4" fill="#facc15" stroke="#ca8a04" strokeWidth="0.8" />
+                <ellipse cx="37" cy="28" rx="2.5" ry="2" fill="#fef08a" />
+              </g>
+              {/* Sparkles around GBear */}
+              <circle cx="6" cy="10" r="1.5" fill="#fef08a" className="animate-ping" />
+              <polygon points="42,8 43.5,11 46.5,11.5 44.5,13.5 45,16.5 42,15 39,16.5 39.5,13.5 37.5,11.5 40.5,11" fill="#fde047" className="animate-pulse" />
             </g>
 
             {/* 4. ORIK THE SPRITE (Front Left) */}

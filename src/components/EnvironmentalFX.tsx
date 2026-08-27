@@ -51,6 +51,17 @@ export const EnvironmentalFX: React.FC<EnvironmentalFXProps> = ({
     };
   }, [location]);
 
+  // Specific magical_chime audio effect when bear animation triggers
+  useEffect(() => {
+    if (sceneId === 'chapter8_4' || sceneId === 'chapter8_6') {
+      try {
+        audioSynth.playSoundEffect('magical_chime');
+      } catch {
+        // audio catch
+      }
+    }
+  }, [sceneId]);
+
   useEffect(() => {
     if (activeLightReward) {
       setShowRewardFX(true);
@@ -81,7 +92,7 @@ export const EnvironmentalFX: React.FC<EnvironmentalFXProps> = ({
   const isAbyssBottleGlow = sceneId === 'chapter5_bottle_glow';
 
   // Is this Mélo Clown giving Wendy her share & plushie?
-  const isPlushieGiftScene = sceneId === 'chapter8_6';
+  const isPlushieGiftScene = sceneId === 'chapter8_4' || sceneId === 'chapter8_6';
 
   return (
     <div className="pointer-events-none fixed inset-0 z-30 overflow-hidden select-none">
@@ -187,45 +198,6 @@ export const EnvironmentalFX: React.FC<EnvironmentalFXProps> = ({
               <circle cx="70" cy="140" r="2.5" fill="#fde047" className="animate-pulse" />
               <circle cx="130" cy="110" r="3" fill="#fde047" className="animate-ping" />
             </svg>
-          </div>
-        </div>
-      )}
-
-      {/* MÉLO CLOWN GLOWING ANIMAL PLUSHIE GIFT FX */}
-      {isPlushieGiftScene && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-50">
-          <div className="animate-plushie-gift flex flex-col items-center bg-slate-950/85 backdrop-blur-md border-2 border-pink-400/60 rounded-3xl p-6 shadow-[0_0_50px_rgba(244,114,182,0.6)]">
-            {/* Cute Glowing Hippo Plushie with star */}
-            <div className="w-24 h-24 sm:w-28 sm:h-28 relative flex items-center justify-center mb-2">
-              <div className="absolute inset-0 bg-pink-400/30 rounded-full blur-xl animate-pulse" />
-              <svg viewBox="0 0 100 100" className="w-full h-full drop-shadow-[0_0_15px_rgba(244,114,182,0.8)]">
-                {/* Round cozy body */}
-                <ellipse cx="50" cy="60" rx="32" ry="26" fill="#f472b6" />
-                <ellipse cx="50" cy="62" rx="20" ry="16" fill="#fbcfe8" />
-                {/* Ears */}
-                <circle cx="28" cy="28" r="8" fill="#f472b6" />
-                <circle cx="28" cy="28" r="4.5" fill="#fbcfe8" />
-                <circle cx="72" cy="28" r="8" fill="#f472b6" />
-                <circle cx="72" cy="28" r="4.5" fill="#fbcfe8" />
-                {/* Snout */}
-                <ellipse cx="50" cy="46" rx="26" ry="19" fill="#f472b6" stroke="#db2777" strokeWidth="1.2" />
-                {/* Nostrils */}
-                <ellipse cx="42" cy="48" rx="3.5" ry="4" fill="#9d174d" />
-                <ellipse cx="58" cy="48" rx="3.5" ry="4" fill="#9d174d" />
-                {/* Happy closed sleepy eyes */}
-                <path d="M36 34 Q41 38 46 34" stroke="#831843" strokeWidth="2" strokeLinecap="round" fill="none" />
-                <path d="M54 34 Q59 38 64 34" stroke="#831843" strokeWidth="2" strokeLinecap="round" fill="none" />
-                {/* Rosy cheeks */}
-                <ellipse cx="30" cy="42" rx="5" ry="3.5" fill="#fb7185" opacity="0.6" />
-                <ellipse cx="70" cy="42" rx="5" ry="3.5" fill="#fb7185" opacity="0.6" />
-                {/* Golden star held in hands */}
-                <polygon points="50,66 53,74 61,75 55,80 57,88 50,84 43,88 45,80 39,75 47,74" fill="#fbbf24" stroke="#f59e0b" strokeWidth="1" className="animate-pulse" />
-                <circle cx="50" cy="78" r="2" fill="#ffffff" className="animate-ping" />
-              </svg>
-            </div>
-            <span className="text-amber-200 font-serif text-xs sm:text-sm font-semibold tracking-wider">
-              {language === 'en' ? '✨ A Cozy Plushie Gift from Mélo Clown ✨' : '✨ Un Doux Cadeau Peluche du Clown Mélo ✨'}
-            </span>
           </div>
         </div>
       )}

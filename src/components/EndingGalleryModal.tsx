@@ -256,43 +256,61 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
             </button>
 
             {/* Character Spotlight Display */}
-            <div className="flex justify-center mb-4 min-h-[220px] sm:min-h-[260px] items-end">
+            <div className="flex justify-center mb-4 min-h-[200px] sm:min-h-[240px] items-end overflow-visible">
               {selectedCharacter === 'orik' && (
-                <CharacterPortrait
-                  characterId="orik"
-                  expression="grateful"
-                />
+                <div className="scale-[0.85] sm:scale-95 origin-bottom">
+                  <CharacterPortrait
+                    characterId="orik"
+                    expression="grateful"
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'artisan' && (
-                <CharacterPortrait
-                  characterId="artisan"
-                  expression="inspired"
-                />
+                <div className="scale-[0.85] sm:scale-95 origin-bottom">
+                  <CharacterPortrait
+                    characterId="artisan"
+                    expression="inspired"
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'lezar' && (
-                <CharacterPortrait
-                  characterId="lezar"
-                  expression="comforting"
-                />
+                <div className="scale-[0.85] sm:scale-95 origin-bottom">
+                  <CharacterPortrait
+                    characterId="lezar"
+                    expression="comforting"
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'clown' && (
-                <CharacterPortrait
-                  characterId="clown"
-                  expression="waving"
-                />
+                <div className="scale-[0.66] sm:scale-[0.72] origin-bottom transform translate-y-1">
+                  <CharacterPortrait
+                    characterId="clown"
+                    expression="waving"
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'wendy_pin' && (
-                <CharacterPortrait
-                  characterId="human_witch"
-                  expression="happy"
-                  showSwwPin={true}
-                />
+                <div className="scale-[0.85] sm:scale-95 origin-bottom">
+                  <CharacterPortrait
+                    characterId="human_witch"
+                    expression="happy"
+                    showSwwPin={true}
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'hypo' && (
-                <CharacterPortrait
-                  characterId="hypo"
-                  expression="happy"
-                />
+                <div className="scale-[0.85] sm:scale-95 origin-bottom">
+                  <CharacterPortrait
+                    characterId="hypo"
+                    expression="happy"
+                    isSpeaking={false}
+                  />
+                </div>
               )}
               {selectedCharacter === 'bottle' && (
                 <div className="relative w-48 h-56 flex items-center justify-center">
@@ -375,7 +393,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                     {language === 'en' ? 'The Golden Pin of Bonds' : 'La Broche Dorée des Liens'}
                   </span>
                   <h3 className="text-2xl font-serif font-bold text-rose-200">
-                    {language === 'en' ? 'Super Witch Wendy (SWW Pin)' : 'Super Sorcière Wendy (Broche SWW)'}
+                    {language === 'en' ? 'Super Witch Wendy (SWTW Brooch)' : 'Super Sorcière Wendy (Broche SWTW)'}
                   </h3>
                 </>
               )}
@@ -411,7 +429,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                 <p>
                   {language === 'en'
                     ? '“Purrrrr… You carried the sun across mountains and seas, Wendy. Now rest your paws, eat sweet treats, and know that you are loved.” 🐾🐱'
-                    : '« Ronron… Tu as porté le soleil par-delà les monts et les mers, Wendy. Maintenant repose tes pattes, savoure tes douceurs, et sache que tu es aimée. » 🐾🐱'}
+                    : '« Ronron… Tu as porté le soleil par-delà les monts et les mers, Wendy. Maintenant, repose tes pattes, savoure tes douceurs et sache que tu es aimée. » 🐾🐱'}
                 </p>
               )}
               {selectedCharacter === 'bottle' && (
@@ -431,8 +449,8 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
               {selectedCharacter === 'wendy_pin' && (
                 <p>
                   {language === 'en'
-                    ? '“A gleaming golden pin inscribed with ‘SWW’, gifted with fondness and clipped proudly in Wendy’s hair. A shining reminder of all the warmth, kindness, and love she brought to the entire world!” 🌸✨'
-                    : '« Une broche dorée étincelante gravée « SWW », offerte avec tendresse et portée avec fierté dans la chevelure de Wendy. Un souvenir rayonnant de toute la chaleur et l’amour partagés ! » 🌸✨'}
+                    ? '“A gleaming golden brooch inscribed with ‘SWTW’, gifted with fondness and clipped proudly in Wendy’s hair. A shining reminder of all the warmth, kindness, and love she brought to the entire world!” 🌸✨'
+                    : '« Une broche dorée étincelante gravée « SWTW », offerte avec tendresse et portée avec fierté dans la chevelure de Wendy. Un souvenir rayonnant de toute la chaleur et l’amour partagés ! » 🌸✨'}
                 </p>
               )}
               {selectedCharacter === 'hypo' && (
@@ -487,7 +505,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                     : 'bg-slate-800 text-cyan-300 hover:bg-slate-700'
                 }`}
               >
-                🍾 Bottle
+                {language === 'en' ? '🍾 Bottle' : '🍾 Bouteille'}
               </button>
               <button
                 onClick={() => handleSelectCharacter('clown')}
@@ -507,7 +525,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                     : 'bg-slate-800 text-rose-300 hover:bg-slate-700'
                 }`}
               >
-                🌸 Wendy (SWW)
+                🌸 Wendy (SWTW)
               </button>
               <button
                 onClick={() => handleSelectCharacter('hypo')}
