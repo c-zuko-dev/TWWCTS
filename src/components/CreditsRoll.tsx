@@ -90,9 +90,9 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
       roleEn: 'Bearer of the Sun & Heart of Light',
       roleFr: 'Porteuse du Soleil & Cœur de Lumière',
       descriptionEn:
-        'Wendy cuddles GBear warmly with blushing happiness, proudly wearing her golden SWTW brooch gifted by Mélo Clown.',
+        'Wendy cuddles GBear warmly with blushing happiness, proudly wearing her golden SWW brooch gifted by Mélo Clown.',
       descriptionFr:
-        'Wendy serre tendrement GBear avec un doux sourire ému, arborant fièrement sa broche dorée SWTW offerte par le Clown Mélo.',
+        'Wendy serre tendrement GBear avec un doux sourire ému, arborant fièrement sa broche dorée SWW offerte par le Clown Mélo.',
       expression: 'holding_gbear',
       showSwwPin: true,
       enterFrom: 'left',
@@ -157,15 +157,33 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
       onSound: () => audioSynth.playSoundEffect('purr'),
     },
     {
+      id: 'hypo',
+      nameEn: 'Hypo the Hippo Plushie',
+      nameFr: 'Hypo la Peluche Hippopotame',
+      roleEn: 'Bearer of the Heavenly Neck Pillow & Serene Rest',
+      roleFr: 'Gardienne du Coussin de Repos Céleste & Douceur',
+      descriptionEn:
+        'Hypo snuggles her magical neck pillow, reminding Wendy that rest and sweet naps are the truest magic of all!',
+      descriptionFr:
+        'Hypo serre son coussin de repos magique, rappelant à Wendy que le repos et les douces siestes sont la plus belle des magies !',
+      expression: 'cuddling_pillow',
+      enterFrom: 'left',
+      exitTo: 'right',
+      icon: '🦛',
+      bgGlow: 'rgba(244, 114, 182, 0.28)',
+      borderGlow: '#f472b6',
+      onSound: () => audioSynth.playSoundEffect('pillow_squeak'),
+    },
+    {
       id: 'clown',
       nameEn: 'Mélo Clown (The Dark Lord)',
       nameFr: 'Le Clown Mélo (Le Seigneur Sombre)',
       roleEn: 'Gentleman of Obsidian & Feast Master',
       roleFr: 'Gentilhomme d’Obsidienne & Maître de Fête',
       descriptionEn:
-        'A dramatic theatrical bow from the Gentleman of Obsidian! Presenting his strawberry-chocolate cake and the golden SWTW brooch with grand flair.',
+        'A dramatic theatrical bow from the Gentleman of Obsidian! Presenting his strawberry-chocolate cake and the golden SWW brooch with grand flair.',
       descriptionFr:
-        'Un salut théâtral du Gentilhomme d’Obsidienne ! Offrant son délicieux gâteau fraise-chocolat et la broche dorée SWTW avec panache.',
+        'Un salut théâtral du Gentilhomme d’Obsidienne ! Offrant son délicieux gâteau fraise-chocolat et la broche dorée SWW avec panache.',
       expression: 'gentleman_theatrical',
       enterFrom: 'right',
       exitTo: 'left',
@@ -640,7 +658,19 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
                       className="absolute inset-0 rounded-full blur-xl animate-pulse pointer-events-none"
                       style={{ backgroundColor: currentParadeChar.bgGlow }}
                     />
-                    <div className="transform scale-95 sm:scale-105">
+                    <div
+                      className={`transform ${
+                        currentParadeChar.id === 'clown'
+                          ? 'scale-75 sm:scale-80 origin-bottom'
+                          : currentParadeChar.id === 'hypo'
+                          ? 'scale-105 sm:scale-115 origin-bottom'
+                          : currentParadeChar.id === 'artisan' || currentParadeChar.id === 'vivienne'
+                          ? 'scale-75 sm:scale-80 origin-bottom'
+                          : currentParadeChar.id === 'orik'
+                          ? 'scale-100 sm:scale-110 origin-bottom'
+                          : 'scale-95 sm:scale-105'
+                      }`}
+                    >
                       <CharacterPortrait
                         characterId={currentParadeChar.id}
                         expression={currentParadeChar.expression}
@@ -896,9 +926,9 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
               onClick={() => audioSynth.playSoundEffect('glass_shimmer')}
               className="p-6 sm:p-7 rounded-3xl bg-gradient-to-b from-amber-950/40 via-slate-900/80 to-amber-950/30 border-2 border-amber-500/40 w-full max-w-xl shadow-xl flex flex-col sm:flex-row items-center gap-6 transition-all hover:border-amber-400 hover:shadow-[0_0_35px_rgba(245,158,11,0.25)] group cursor-pointer"
             >
-              <div className="relative w-40 h-44 flex-shrink-0 flex items-end justify-center overflow-visible">
+              <div className="relative w-32 h-38 sm:w-36 sm:h-40 flex-shrink-0 flex items-end justify-center overflow-visible">
                 <div className="absolute inset-0 bg-amber-600/15 rounded-full blur-xl pointer-events-none group-hover:bg-amber-500/30 transition-all" />
-                <div className="transform scale-95 origin-bottom group-hover:scale-100 transition-transform">
+                <div className="transform scale-75 sm:scale-80 origin-bottom group-hover:scale-85 transition-transform">
                   <CharacterPortrait characterId="vivienne" expression="inspired" language={language} />
                 </div>
               </div>
@@ -932,7 +962,7 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
             >
               <div className="relative w-40 h-44 flex-shrink-0 flex items-end justify-center overflow-visible">
                 <div className="absolute inset-0 bg-pink-500/10 rounded-full blur-xl pointer-events-none group-hover:bg-pink-400/20 transition-all" />
-                <div className="transform scale-90 origin-bottom group-hover:scale-95 transition-transform">
+                <div className="transform scale-100 sm:scale-105 origin-bottom group-hover:scale-110 transition-transform">
                   <CharacterPortrait characterId="hypo" expression="cuddling_pillow" language={language} />
                 </div>
               </div>
@@ -971,7 +1001,7 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
             >
               <div className="relative w-40 h-44 flex-shrink-0 flex items-end justify-center overflow-visible">
                 <div className="absolute inset-0 bg-purple-600/15 rounded-full blur-xl pointer-events-none group-hover:bg-purple-500/25 transition-all" />
-                <div className="transform scale-95 origin-bottom group-hover:scale-100 transition-transform">
+                <div className="transform scale-80 sm:scale-85 origin-bottom group-hover:scale-90 transition-transform">
                   <CharacterPortrait characterId="clown" expression="gentleman_theatrical" language={language} />
                 </div>
               </div>
@@ -1136,14 +1166,14 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
           </div>
 
           {/* Action Navigation Buttons */}
-          <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-md justify-center pt-6">
+          <div className="flex flex-wrap items-center gap-3 w-full max-w-2xl justify-center pt-6">
             <button
               id="credits-btn-memories"
               onClick={onViewMemories}
-              className="w-full sm:w-auto px-6 py-3 rounded-full bg-gradient-to-r from-amber-600 via-amber-500 to-amber-600 hover:from-amber-500 hover:to-amber-400 text-slate-950 font-bold text-sm shadow-lg hover:shadow-amber-500/30 transition-all transform hover:scale-105 cursor-pointer flex items-center justify-center gap-2 border border-amber-300"
+              className="w-full sm:w-auto px-5 py-3 rounded-full bg-gradient-to-r from-amber-950 via-amber-850 to-slate-900 hover:from-amber-900 hover:to-slate-850 text-amber-200 hover:text-white font-serif font-bold text-xs sm:text-sm shadow-lg hover:shadow-amber-500/20 transition-all transform hover:scale-105 cursor-pointer flex items-center justify-center gap-2 border border-amber-400/50"
             >
-              <Sparkles className="w-4 h-4 text-slate-950" />
-              <span>{language === 'en' ? 'View Relics & Endings ✨' : 'Voir les Souvenirs ✨'}</span>
+              <Sparkles className="w-4 h-4 text-amber-300" />
+              <span>{language === 'en' ? 'Memories Scrapbook 📖' : 'Album Souvenirs 📖'}</span>
             </button>
 
             <button

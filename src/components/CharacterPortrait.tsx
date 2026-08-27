@@ -1,6 +1,14 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { CharacterExpression, CharacterId, Language } from '../types';
 import { audioSynth } from '../utils/audioSynthesizer';
+
+interface BubbleLayout {
+  x: number;
+  y: number;
+  placement: 'top' | 'bottom';
+  arrowOffsetPx: number;
+}
 
 interface CharacterPortraitProps {
   characterId: CharacterId;
@@ -244,7 +252,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       audioSynth.playSoundEffect('orik_chirp');
       setIsOrikBlushing(true);
       setClickReaction({ text: language === 'fr' ? 'Oh... *rougit* 🌱✨' : 'Aww~ (blushes) 🌱✨', emoji: '💚' });
-      setTimeout(() => setIsOrikBlushing(false), 2400);
+      setTimeout(() => setIsOrikBlushing(false), 2600);
     } else if (characterId === 'artisan') {
       const isHelped = expression === 'inspired' || expression === 'grateful' || expression === 'happy' || expression === 'warm' || expression === 'celebrating';
       if (isHelped) {
@@ -344,7 +352,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       audioSynth.playSoundEffect('magic_sparkle');
       setClickReaction({ text: '✨', emoji: '🌟' });
     }
-    setTimeout(() => setClickReaction(null), 1800);
+    setTimeout(() => setClickReaction(null), 2800);
   };
 
   // Character-specific breathing animations for living, organic presence
@@ -382,7 +390,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       onClick={handleCharacterClick}
       data-character={characterId}
       data-interactive={characterId === 'witch' || characterId === 'human_witch' ? 'witch' : 'character'}
-      className={`relative flex items-end justify-center transition-all duration-500 select-none cursor-pointer hover:scale-[1.02] ${
+      className={`relative inline-flex items-end justify-center transition-all duration-500 select-none cursor-pointer hover:scale-[1.02] ${
         isSecondary
           ? 'scale-75 opacity-80 -translate-x-4 pointer-events-none'
           : `scale-100 opacity-100 z-10 ${portraitMovementClass}`
@@ -403,11 +411,29 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
         </div>
       )}
 
-      {/* Floating Character Click Popup */}
+      {/* Smart Adaptive Floating Character Dialogue */}
       {clickReaction && (
-        <div className="absolute -top-3 sm:-top-1 left-1/2 -translate-x-1/2 z-50 pointer-events-none animate-bounce px-3 py-1.5 rounded-full bg-slate-950/95 text-amber-200 border-2 border-amber-400/80 text-xs sm:text-sm font-serif shadow-2xl flex items-center gap-1.5 max-w-[92vw] whitespace-nowrap">
-          <span>{clickReaction.emoji}</span>
-          <span className="font-semibold tracking-wide drop-shadow-sm">{clickReaction.text}</span>
+        <div
+          className="absolute z-[99999] pointer-events-none transition-transform duration-200 ease-out animate-bubble-pop"
+          style={{
+            left: '50%',
+            bottom: '100%',
+            transform: 'translateX(-50%)',
+            marginBottom: '10px', // Small gap between bubble and character
+          }}
+        >
+          <div className="relative flex flex-col items-center">
+            {/* High-contrast, unclipped Speech Bubble Card */}
+            <div className="flex items-center gap-2 px-4 py-2 rounded-2xl sm:rounded-full bg-slate-950/95 text-amber-100 border-2 border-amber-400/90 text-xs sm:text-sm font-serif font-medium shadow-[0_12px_28px_rgba(0,0,0,0.85),0_0_24px_rgba(251,191,36,0.4)] backdrop-blur-md w-max max-w-[92vw] sm:max-w-[380px] text-center leading-snug">
+              <span className="text-base shrink-0">{clickReaction.emoji}</span>
+              <span className="font-semibold tracking-wide drop-shadow-sm break-words">{clickReaction.text}</span>
+            </div>
+
+            {/* Pointer arrow pointing DOWN toward character */}
+            <div 
+              className="w-0 h-0 border-x-[7px] border-x-transparent border-t-[8px] border-t-amber-400 drop-shadow-md mt-[-1px] z-20"
+            />
+          </div>
         </div>
       )}
 
@@ -494,7 +520,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* WITCH PORTRAIT (MAGICAL) - REFINED ANATOMICAL PROPORTIONS & GRACEFUL POSTURE */}
       {characterId === 'witch' && (
-        <div className="relative w-44 h-60 sm:w-56 sm:h-76 md:w-64 md:h-84 max-h-[38vh] sm:max-h-[44vh] flex items-end justify-center drop-shadow-2xl">
+        <div className="relative h-[385px] max-h-[78%] aspect-[300/400] flex items-end justify-center drop-shadow-2xl">
           <svg viewBox="0 0 300 400" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="witchCloakGrad" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -599,7 +625,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             {showSwwPin && (
               <g transform="translate(162, 230)" className="animate-glint-flash">
                 <circle cx="0" cy="0" r="7.5" fill="#fbbf24" stroke="#d97706" strokeWidth="1.2" />
-                <text x="0" y="2.2" fontSize="4.2" fontWeight="bold" fill="#78350f" textAnchor="middle" fontFamily="serif" letterSpacing="0.4">SWTW</text>
+                <text x="0" y="2.2" fontSize="4.2" fontWeight="bold" fill="#78350f" textAnchor="middle" fontFamily="serif" letterSpacing="0.4">SWW</text>
               </g>
             )}
 
@@ -824,7 +850,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       {/* HUMAN WENDY (POST-SACRIFICE & EPILOGUE) - COHESIVE, ELEGANT PRINCESS & BIRTHDAY OUTFIT */}
       {characterId === 'human_witch' && (
         <div
-          className={`relative w-44 h-60 sm:w-56 sm:h-76 md:w-64 md:h-84 max-h-[38vh] sm:max-h-[44vh] flex items-end justify-center drop-shadow-2xl animate-princess-float ${
+          className={`relative h-[385px] max-h-[78%] aspect-[300/400] flex items-end justify-center drop-shadow-2xl animate-princess-float ${
             expression === 'receiving_gbear' || expression === 'holding_gbear'
               ? 'animate-wendy-shared-glow drop-shadow-[0_0_40px_rgba(251,191,36,0.75)]'
               : ''
@@ -1261,10 +1287,10 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
       {/* LEZAR THE TONKINESE CAT (Interactive: Click to Meow!) - ULTRA FLUFFY & PLUSH */}
       {characterId === 'lezar' && (
         <div
-          className="relative w-56 h-68 sm:w-64 sm:h-76 flex items-end justify-center drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform"
+          className="relative h-[310px] max-h-[64%] aspect-[240/300] flex items-end justify-center drop-shadow-2xl cursor-pointer hover:scale-105 transition-transform"
           title="Click Lezar to hear him meow!"
         >
-          <svg viewBox="0 0 240 300" className="w-full h-full">
+          <svg viewBox="0 0 240 300" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="lezarBody" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#ded1c1" />
@@ -1456,7 +1482,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* THE DARK LORD OF THE OBSIDIAN CHASM ("THE DARK CLOWN") */}
       {characterId === 'clown' && (
-        <div className="relative w-56 h-76 sm:w-68 sm:h-92 max-h-[44vh] sm:max-h-[48vh] flex items-end justify-center drop-shadow-2xl">
+        <div className="relative h-[380px] max-h-[80%] aspect-[340/460] flex items-end justify-center drop-shadow-2xl">
           {/* ========================================================================= */}
           {/* 1. TRUE ABYSS FORM (Monstrous, ancient supernatural void entity) */}
           {/* ACTIVE THROUGHOUT THE ENTIRE ABYSS CHAPTER & JOURNEY UNTIL SUNRISE */}
@@ -1469,7 +1495,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
            expression !== 'gentleman_presenting_bear' &&
            expression !== 'gentleman_surprised' && 
            expression !== 'gentleman_normal' ? (
-            <svg viewBox="0 0 380 500" className="w-full h-full">
+            <svg viewBox="0 0 380 500" className="w-full h-full max-h-full object-contain">
               <defs>
                 {/* Abyssal Void Body Gradient */}
                 <linearGradient id="abyssBodyVoid" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -1749,7 +1775,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             /* 2. THEATRICAL GENTLEMAN / BIRTHDAY CELEBRATION (NORMAL FORM) */
             /* ONLY ACTIVE AFTER THE EXPLICIT POST-ABYSS TRANSFORMATION EVENT */
             /* ========================================================================= */
-            <svg viewBox="0 0 340 460" className="w-full h-full">
+            <svg viewBox="0 0 340 460" className="w-full h-full max-h-full object-contain">
               <defs>
                 {/* Pitch Obsidian Coat (Almost disappears into total darkness) */}
                 <linearGradient id="dlCoat" x1="0%" y1="0%" x2="0%" y2="100%">
@@ -2183,8 +2209,8 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* ORIK THE SPRITE */}
       {characterId === 'orik' && (
-        <div className="relative w-48 h-64 sm:w-56 sm:h-72 flex items-end justify-center drop-shadow-xl">
-          <svg viewBox="0 0 200 260" className="w-full h-full">
+        <div className="relative h-[255px] max-h-[52%] aspect-[200/260] flex items-end justify-center drop-shadow-xl">
+          <svg viewBox="0 0 200 260" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="mossGrad" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#4ade80" />
@@ -2316,8 +2342,8 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* VIVIENNE THE GLASSMAKER - PROPORTIONATE ARTISAN BODY */}
       {(characterId === 'artisan' || characterId === 'vivienne') && (
-        <div className="relative w-56 h-76 sm:w-64 sm:h-88 flex items-end justify-center drop-shadow-xl">
-          <svg viewBox="0 0 240 320" className="w-full h-full">
+        <div className="relative h-[435px] max-h-[88%] aspect-[240/320] flex items-end justify-center drop-shadow-xl">
+          <svg viewBox="0 0 240 320" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="leatherApron" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#854d0e" />
@@ -2510,8 +2536,8 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
 
       {/* HYPO THE HIPPO PLUSHIE (HOLDING NECK PILLOW) */}
       {characterId === 'hypo' && (
-        <div className="relative w-52 h-64 sm:w-60 sm:h-72 flex items-end justify-center drop-shadow-xl">
-          <svg viewBox="0 0 240 280" className="w-full h-full">
+        <div className="relative h-[255px] max-h-[58%] aspect-[240/280] flex items-end justify-center drop-shadow-xl">
+          <svg viewBox="0 0 240 280" className="w-full h-full max-h-full object-contain">
             <defs>
               <linearGradient id="hypoPlush" x1="0%" y1="0%" x2="0%" y2="100%">
                 <stop offset="0%" stopColor="#cbd5e1" />
@@ -2871,7 +2897,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             </g>
 
             {/* 5. HYPO THE HIPPO (Front Center-Left) */}
-            <g transform="translate(145, 205)">
+            <g transform="translate(138, 192) scale(1.2)">
               {/* Plush Body */}
               <ellipse cx="25" cy="55" rx="22" ry="24" fill="#94a3b8" />
               <ellipse cx="25" cy="30" rx="18" ry="16" fill="#94a3b8" />

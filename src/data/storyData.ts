@@ -94,8 +94,8 @@ export const ALL_COLLECTIBLE_LIGHTS: Record<string, LightItem> = {
   sww_pin: {
     id: 'sww_pin',
     name: {
-      en: 'Golden "SWTW" Brooch',
-      fr: 'Broche Dorée « SWTW »',
+      en: 'Golden "SWW" Brooch',
+      fr: 'Broche Dorée « SWW »',
     },
     description: {
       en: 'An ornate gold brooch gifted by Mélo Clown celebrating Super Witch Wendy.',
@@ -107,6 +107,24 @@ export const ALL_COLLECTIBLE_LIGHTS: Record<string, LightItem> = {
     giver: {
       en: 'Mélo Clown & Friends',
       fr: 'Le Clown Mélo & Ses Amis',
+    },
+  },
+  hypo_pillow: {
+    id: 'hypo_pillow',
+    name: {
+      en: 'Cozy Cloud Neck Pillow',
+      fr: 'Coussin Nuage Moelleux',
+    },
+    description: {
+      en: 'A soft plush pink neck pillow gifted by Hypo to ensure Wendy always gets peaceful naps and gentle dreams.',
+      fr: 'Un coussin tout doux offert par Hypo pour veiller aux siestes paisibles et doux songes de Wendy.',
+    },
+    color: '#f472b6',
+    secondaryColor: '#fbcfe8',
+    icon: 'heart',
+    giver: {
+      en: 'Hypo the Hippo Plushie',
+      fr: 'Hypo la Peluche Hippopotame',
     },
   },
 };
@@ -1475,15 +1493,15 @@ export const STORY_DATA: Record<string, DialogueLine> = {
     location: 'birthday_feast',
     sfx: 'soft_bell',
     text: {
-      en: 'From his midnight velvet coat, Mélo Clown retrieved a radiant golden brooch engraved with fine celestial runes: “SWTW” — Super Witch Wendy.',
-      fr: 'De son manteau de velours de minuit, le Clown Mélo sortit une broche étincelante en émail doré ornée de fines runes célestes : « SWTW » — Super Sorcière Wendy.',
+      en: 'From his midnight velvet coat, Mélo Clown retrieved a radiant golden brooch engraved with fine celestial runes: “SWW” — Super Witch Wendy.',
+      fr: 'De son manteau de velours de minuit, le Clown Mélo sortit une broche étincelante en émail doré ornée de fines runes célestes : « SWW » — Super Sorcière Wendy.',
     },
     choices: [
       {
         id: 'epilogue_accept_pin',
         text: {
-          en: 'Accept the golden "SWTW" brooch with a bright smile and pin it proudly to your dress.',
-          fr: 'Accepter la broche dorée « SWTW » avec un sourire radieux et l’accrocher fièrement à votre robe.',
+          en: 'Accept the golden "SWW" brooch with a bright smile and pin it proudly to your dress.',
+          fr: 'Accepter la broche dorée « SWW » avec un sourire radieux et l’accrocher fièrement à votre robe.',
         },
         nextSceneId: 'epilogue_16',
         narrativeFlag: 'sww_pin_equipped',

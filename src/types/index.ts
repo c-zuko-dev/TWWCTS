@@ -70,13 +70,15 @@ export type ClownExpression =
 
 export type OrikExpression = 'shivering' | 'grateful' | 'peaceful' | 'happy';
 export type ArtisanExpression = 'weary' | 'inspired' | 'warm' | 'celebrating';
+export type HypoExpression = 'cuddling_pillow' | 'happy' | 'peaceful';
 
 export type CharacterExpression =
   | WitchExpression
   | LezarExpression
   | ClownExpression
   | OrikExpression
-  | ArtisanExpression;
+  | ArtisanExpression
+  | HypoExpression;
 
 export type SceneLocation =
   | 'cottage_twilight'

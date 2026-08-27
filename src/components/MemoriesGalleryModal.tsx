@@ -64,8 +64,16 @@ const MEMORY_VISUAL_CONFIG: Record<string, MemoryVisualConfig> = {
     origin: 'center center',
     renderType: 'bottle',
   },
+  hypo_memory: {
+    scale: 0.92,
+    offsetY: 0,
+    origin: 'bottom center',
+    renderType: 'character',
+    characterId: 'hypo',
+    expression: 'cuddling_pillow',
+  },
   clown_memory: {
-    scale: 0.58,
+    scale: 0.52,
     offsetY: 8,
     origin: 'bottom center',
     renderType: 'character',
@@ -90,6 +98,7 @@ interface MemoriesGalleryModalProps {
   collectedLights: LightItem[];
   playCount: number;
   onUnlockAllForDev?: () => void;
+  initialPageIndex?: number;
 }
 
 interface MemoryEntry {
@@ -184,6 +193,25 @@ const MEMORY_ENTRIES: MemoryEntry[] = [
     sfxLabel: { en: 'Crystal Chime', fr: 'Carillon de Verre' },
   },
   {
+    id: 'hypo_memory',
+    lightKey: 'hypo_pillow',
+    character: 'Hypo the Hippo Plushie',
+    characterShort: { en: 'Hypo', fr: 'Hypo' },
+    badgeIcon: '🦛',
+    photoTitle: {
+      en: 'The Celestial Neck Pillow of Rest',
+      fr: 'Le Coussin de Repos Céleste',
+    },
+    journalExcerpt: {
+      en: 'A soft, fluffy neck pillow offered with endless cuddles. Hypo gently whispers that taking time to rest, breathe, and dream is just as sacred as casting spells.',
+      fr: 'Un coussin de repos tout doux offert avec de tendres câlins. Hypo murmure gentiment que prendre le temps de se reposer et de rêver est aussi sacré que de lancer des sorts.',
+    },
+    tapeColor: 'bg-pink-700/70 border-pink-400/40',
+    accentColor: '#f472b6',
+    sfx: 'pillow_squeak',
+    sfxLabel: { en: 'Pillow Squeak', fr: 'Pouet Douillet' },
+  },
+  {
     id: 'clown_memory',
     lightKey: 'clown_spark',
     character: 'Mélo Clown (The Gentle Gentleman)',
@@ -209,8 +237,8 @@ const MEMORY_ENTRIES: MemoryEntry[] = [
     characterShort: { en: 'Witch Wendy', fr: 'Wendy' },
     badgeIcon: '🌸',
     photoTitle: {
-      en: 'Golden "SWTW" Brooch of Super Witch Wendy',
-      fr: 'Broche Dorée « SWTW » de Wendy',
+      en: 'Golden "SWW" Brooch of Super Witch Wendy',
+      fr: 'Broche Dorée « SWW » de Wendy',
     },
     journalExcerpt: {
       en: 'Bestowed during the joyful birthday feast by Mélo Clown and all companions. A shimmering token reminding Wendy that kindness is the greatest sorcery of all.',
@@ -230,20 +258,24 @@ export const MemoriesGalleryModal: React.FC<MemoriesGalleryModalProps> = ({
   collectedLights,
   playCount,
   onUnlockAllForDev,
+  initialPageIndex = 0,
 }) => {
-  const [selectedPageIndex, setSelectedPageIndex] = useState(0);
+  const [selectedPageIndex, setSelectedPageIndex] = useState(initialPageIndex);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
   const [clickCount, setClickCount] = useState(0);
 
   React.useEffect(() => {
     if (isOpen) {
+      if (initialPageIndex >= 0 && initialPageIndex < MEMORY_ENTRIES.length) {
+        setSelectedPageIndex(initialPageIndex);
+      }
       audioSynth.playSoundEffect('memory_chime');
     }
-  }, [isOpen]);
+  }, [isOpen, initialPageIndex]);
 
   if (!isOpen) return null;
 
-  const isUnlocked = playCount >= 7;
+  const isUnlocked = true;
   const currentMemory = MEMORY_ENTRIES[selectedPageIndex];
   const lightItem = ALL_COLLECTIBLE_LIGHTS[currentMemory.lightKey];
   const visualConfig = MEMORY_VISUAL_CONFIG[currentMemory.id] || {
@@ -299,37 +331,25 @@ export const MemoriesGalleryModal: React.FC<MemoriesGalleryModalProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-serif font-bold text-amber-100 tracking-wide flex items-center gap-1.5">
-                  {language === 'en' ? 'Memories of Starlight' : 'Album des Souvenirs de Starlight'}
+                  <BookOpen className="w-4 h-4 text-amber-300" />
+                  <span>{language === 'en' ? 'Memories Scrapbook' : 'Album des Souvenirs'}</span>
                 </h2>
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-mono font-medium hidden xs:inline-flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />
-                  {language === 'en' ? 'Archival Folio' : 'Folio d’Archives'}
+                  {language === 'en' ? 'Personal Folio' : 'Folio Intime'}
                 </span>
               </div>
               <p className="text-[11px] font-serif text-amber-300/80">
                 {language === 'en'
-                  ? `Preserved across 7 Journeys (${playCount}/7 completed)`
-                  : `Préservé à travers 7 Voyages (${playCount}/7 accomplis)`}
+                  ? 'Personal Relics & Treasures of Companionship'
+                  : 'Reliques Personnelles & Trésors d’Amitié'}
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {!isUnlocked && (
-              <button
-                onClick={() => {
-                  audioSynth.playSoundEffect('magic_sparkle');
-                  if (onUnlockAllForDev) onUnlockAllForDev();
-                }}
-                className="px-2.5 py-1 text-xs rounded-lg bg-amber-500/20 border border-amber-400/40 text-amber-200 hover:bg-amber-500/30 transition-all font-serif flex items-center gap-1.5 cursor-pointer active:scale-95 shadow-sm"
-                title={language === 'en' ? 'Preview the scrapbook now' : 'Débloquer l’aperçu maintenant'}
-              >
-                <Sparkles className="w-3.5 h-3.5 text-amber-300 animate-spin-slow" />
-                <span className="hidden sm:inline">{language === 'en' ? 'Preview' : 'Aperçu'}</span>
-              </button>
-            )}
-
             <button
+              id="btn-memories-close"
               onClick={() => {
                 audioSynth.playSoundEffect('click');
                 onClose();
@@ -341,23 +361,6 @@ export const MemoriesGalleryModal: React.FC<MemoriesGalleryModalProps> = ({
             </button>
           </div>
         </div>
-
-        {/* Lock Overlay Banner if player has < 7 playthroughs */}
-        {!isUnlocked && playCount < 7 && (
-          <div className="px-4 py-2 bg-amber-950/80 border-b border-amber-700/40 flex items-center justify-between text-xs font-serif text-amber-200/90 shrink-0">
-            <div className="flex items-center gap-2">
-              <Lock className="w-3.5 h-3.5 text-amber-400 shrink-0" />
-              <span>
-                {language === 'en'
-                  ? `Complete 7 journeys to permanently preserve your memories.`
-                  : `Complétez 7 voyages pour conserver vos souvenirs pour toujours.`}
-              </span>
-            </div>
-            <span className="font-semibold text-amber-300 shrink-0 ml-2">
-              {language === 'en' ? `${7 - playCount} remaining` : `Encore ${7 - playCount}`}
-            </span>
-          </div>
-        )}
 
         {/* Scrollable Folio Body: Parchment Page + Curated Filmstrip */}
         <div className="flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto space-y-4 bg-gradient-to-b from-[#23170e] via-[#2c1d12] to-[#170e06]">
@@ -633,8 +636,9 @@ export const MemoriesGalleryModal: React.FC<MemoriesGalleryModalProps> = ({
                       {entry.badgeIcon === '🔥' && (language === 'en' ? 'Hearth' : 'Âtre')}
                       {entry.badgeIcon === '🐾' && (language === 'en' ? 'Familiar' : 'Familier')}
                       {entry.badgeIcon === '🍾' && (language === 'en' ? 'Message' : 'Message')}
+                      {entry.badgeIcon === '🦛' && (language === 'en' ? 'Pillow' : 'Coussin')}
                       {entry.badgeIcon === '🎩' && (language === 'en' ? 'Kindness' : 'Gentillesse')}
-                      {entry.badgeIcon === '🌸' && (language === 'en' ? 'SWTW Pin' : 'Broche')}
+                      {entry.badgeIcon === '🌸' && (language === 'en' ? 'SWW Pin' : 'Broche')}
                     </span>
                   </button>
                 );

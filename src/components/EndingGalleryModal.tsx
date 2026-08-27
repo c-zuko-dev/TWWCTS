@@ -214,7 +214,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
               className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-amber-900 via-amber-800 to-stone-900 hover:from-amber-800 hover:to-amber-950 text-amber-100 rounded-2xl font-serif text-sm sm:text-base font-semibold shadow-lg border border-amber-400/50 hover:border-amber-300 transition-all transform hover:-translate-y-0.5 cursor-pointer shadow-[0_0_20px_rgba(251,191,36,0.2)]"
             >
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-              <span>{language === 'en' ? 'Memories Scrapbook' : 'Album des Souvenirs'}</span>
+              <span>{language === 'en' ? 'Memories Scrapbook 📖' : 'Album des Souvenirs 📖'}</span>
             </button>
           )}
 
@@ -393,7 +393,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                     {language === 'en' ? 'The Golden Pin of Bonds' : 'La Broche Dorée des Liens'}
                   </span>
                   <h3 className="text-2xl font-serif font-bold text-rose-200">
-                    {language === 'en' ? 'Super Witch Wendy (SWTW Brooch)' : 'Super Sorcière Wendy (Broche SWTW)'}
+                    {language === 'en' ? 'Super Witch Wendy (SWW Brooch)' : 'Super Sorcière Wendy (Broche SWW)'}
                   </h3>
                 </>
               )}
@@ -525,7 +525,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
                     : 'bg-slate-800 text-rose-300 hover:bg-slate-700'
                 }`}
               >
-                🌸 Wendy (SWTW)
+                🌸 Wendy (SWW)
               </button>
               <button
                 onClick={() => handleSelectCharacter('hypo')}

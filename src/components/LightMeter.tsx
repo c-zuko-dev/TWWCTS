@@ -285,11 +285,11 @@ export const LightMeter: React.FC<LightMeterProps> = ({
               </div>
             </div>
 
-            {/* Close Button */}
-            <div className="mt-5 pt-4 border-t border-amber-500/20 text-center">
+            {/* Action Buttons */}
+            <div className="mt-5 pt-4 border-t border-amber-500/20 flex items-center justify-center">
               <button
                 onClick={() => setIsOpenDetails(false)}
-                className="px-6 py-2 rounded-xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold text-xs sm:text-sm font-serif shadow-lg cursor-pointer transition-all"
+                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-amber-200 border border-amber-500/30 font-bold text-xs sm:text-sm font-serif shadow-lg cursor-pointer transition-all"
               >
                 {language === 'en' ? 'Back to Story' : 'Retour au Conte'}
               </button>

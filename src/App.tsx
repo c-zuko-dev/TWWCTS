@@ -42,6 +42,7 @@ export default function App() {
   const [isShowingStorybookEnding, setIsShowingStorybookEnding] = useState(false);
   const [isShowingCredits, setIsShowingCredits] = useState(false);
   const [isMemoriesOpen, setIsMemoriesOpen] = useState(false);
+  const [selectedRelicIndex, setSelectedRelicIndex] = useState<number>(0);
   const [showAutoSaveToast, setShowAutoSaveToast] = useState(false);
   const [prologuePhase, setProloguePhase] = useState<'none' | 'opening_dissolve' | 'prologue_card' | 'environment_reveal'>('none');
   const [playCount, setPlayCount] = useState<number>(() => {
@@ -91,6 +92,21 @@ export default function App() {
   // It is NOT worn during Sun returns (chapter7), mirror (chapter9), or early celebration scenes.
   const hasSwwPin = postPinCelebrationScenes.includes(currentSceneId);
 
+  const isMemoriesOpenRef = useRef(isMemoriesOpen);
+  useEffect(() => {
+    isMemoriesOpenRef.current = isMemoriesOpen;
+  }, [isMemoriesOpen]);
+
+  const inTitleScreenRef = useRef(inTitleScreen);
+  useEffect(() => {
+    inTitleScreenRef.current = inTitleScreen;
+  }, [inTitleScreen]);
+
+  const isShowingCreditsRef = useRef(isShowingCredits);
+  useEffect(() => {
+    isShowingCreditsRef.current = isShowingCredits;
+  }, [isShowingCredits]);
+
   const autoPlayTimerRef = useRef<number | null>(null);
   const autoSaveTimerRef = useRef<number | null>(null);
   const prologueTimersRef = useRef<number[]>([]);
@@ -99,6 +115,15 @@ export default function App() {
     prologueTimersRef.current.forEach((t) => window.clearTimeout(t));
     prologueTimersRef.current = [];
   };
+
+  // Ensure prologue overlay and timers are strictly suppressed when any modal, title, credits, or relics view is opened
+  useEffect(() => {
+    if (isMemoriesOpen || isEnding || inTitleScreen || isShowingCredits || isShowingStorybookOpening || isShowingStorybookEnding) {
+      clearPrologueTimers();
+      setProloguePhase('none');
+      setShowChapterCard(false);
+    }
+  }, [isMemoriesOpen, isEnding, inTitleScreen, isShowingCredits, isShowingStorybookOpening, isShowingStorybookEnding]);
 
   // Determine transition mood tint for smooth, immersive scene bridging
   const getSceneMoodTint = (scene: DialogueLine) => {
@@ -442,32 +467,55 @@ export default function App() {
     clearPrologueTimers();
     setIsShowingStorybookOpening(false);
     setIsShowingCredits(false);
+    setIsMemoriesOpen(false);
     setCurrentSceneId('prologue_1');
     setSceneHistory([]);
 
-    // Deliberate atmospheric opening flow:
-    // 1. Opening dissolve (soft page-turn & sparkles)
-    // 2. PROLOGUE chapter card (0.8-1s breathing room)
-    // 3. Environment reveal (cottage night settling)
-    // 4. First narration appears
+    // Atmospheric opening sequence
     setProloguePhase('opening_dissolve');
     audioSynth.playSoundEffect('magic_sparkle');
 
     const t1 = window.setTimeout(() => {
-      setProloguePhase('prologue_card');
-      audioSynth.playSoundEffect('soft_bell');
+      if (!isMemoriesOpenRef.current && !inTitleScreenRef.current && !isShowingCreditsRef.current) {
+        setProloguePhase('prologue_card');
+        audioSynth.playSoundEffect('soft_bell');
 
-      const t2 = window.setTimeout(() => {
-        setProloguePhase('environment_reveal');
+        const t2 = window.setTimeout(() => {
+          if (!isMemoriesOpenRef.current && !inTitleScreenRef.current && !isShowingCreditsRef.current) {
+            setProloguePhase('environment_reveal');
 
-        const t3 = window.setTimeout(() => {
-          setProloguePhase('none');
-        }, 900);
-        prologueTimersRef.current.push(t3);
-      }, 1300);
-      prologueTimersRef.current.push(t2);
+            const t3 = window.setTimeout(() => {
+              if (!isMemoriesOpenRef.current && !inTitleScreenRef.current && !isShowingCreditsRef.current) {
+                setProloguePhase('none');
+              }
+            }, 900);
+            prologueTimersRef.current.push(t3);
+          }
+        }, 1300);
+        prologueTimersRef.current.push(t2);
+      }
     }, 850);
     prologueTimersRef.current.push(t1);
+  };
+
+  const handleOpenRelics = (index?: number) => {
+    clearPrologueTimers();
+    setProloguePhase('none');
+    setShowChapterCard(false);
+    if (typeof index === 'number') {
+      setSelectedRelicIndex(index);
+    }
+    setIsMemoriesOpen(true);
+  };
+
+  const handleOpenMemories = (index?: number) => {
+    clearPrologueTimers();
+    setProloguePhase('none');
+    setShowChapterCard(false);
+    if (typeof index === 'number') {
+      setSelectedRelicIndex(index);
+    }
+    setIsMemoriesOpen(true);
   };
 
   const handleContinueGame = () => {
@@ -597,7 +645,7 @@ export default function App() {
   const hasActiveChoices = Boolean(currentScene.choices && currentScene.choices.length > 0);
   const zoomMode = currentScene.zoom || 'normal';
   const zoomTransformClass = hasActiveChoices
-    ? 'scale-[0.68] sm:scale-[0.74] max-h-[32vh] sm:max-h-[36vh] origin-bottom mb-1'
+    ? 'origin-bottom mb-1'
     : zoomMode === 'close_up' || zoomMode === 'close'
     ? 'scale-105 sm:scale-110 -translate-y-1 sm:-translate-y-2'
     : zoomMode === 'extreme_close' || zoomMode === 'cinematic'
@@ -802,7 +850,7 @@ export default function App() {
           </div>
         )}
 
-        {/* Prologue Chapter Banner Card with Breathing Room */}
+        {/* Prologue Chapter Banner Card with Breathing Room - STRICTLY SUPPRESSED WHEN IN RELICS OR MEMORIES */}
         {currentSceneId === 'prologue_1' && !isEnding && !isMemoriesOpen && !inTitleScreen && !isShowingCredits && !isShowingStorybookOpening && !isShowingStorybookEnding && prologuePhase === 'prologue_card' && (
           <div
             onClick={() => setProloguePhase('none')}
@@ -845,7 +893,7 @@ export default function App() {
         )}
 
         {/* Chapter Title Transition Banner Card for Mid-Game Chapters */}
-        {showChapterCard && currentScene.chapterTitle && prologuePhase === 'none' && (
+        {showChapterCard && currentScene.chapterTitle && prologuePhase === 'none' && !isMemoriesOpen && !inTitleScreen && !isShowingCredits && !isShowingStorybookOpening && !isShowingStorybookEnding && (
           <div className="fixed inset-0 z-40 flex items-center justify-center bg-black/65 backdrop-blur-sm pointer-events-none animate-fade-in">
             <div className="text-center p-8 border-y border-amber-500/40 bg-slate-950/80 w-full max-w-2xl">
               <h3 className="text-amber-400 font-serif text-sm sm:text-base tracking-[0.3em] uppercase mb-2">
@@ -863,11 +911,12 @@ export default function App() {
           <TitleScreen
             onStartGame={handleStartGame}
             onContinueGame={hasSaveData ? handleContinueGame : undefined}
-            onShowCredits={() => setIsShowingCredits(true)}
-            onOpenMemories={() => {
+            onShowCredits={() => {
+              clearPrologueTimers();
               setProloguePhase('none');
-              setIsMemoriesOpen(true);
+              setIsShowingCredits(true);
             }}
+            onOpenMemories={handleOpenMemories}
             playCount={playCount}
             hasSaveData={hasSaveData}
             language={language}
@@ -886,12 +935,7 @@ export default function App() {
             onToggleLanguage={handleToggleLanguage}
             isMuted={isMuted}
             onToggleAudio={handleToggleAudio}
-            onViewMemories={() => {
-              setProloguePhase('none');
-              setIsShowingCredits(false);
-              setIsShowingStorybookEnding(false);
-              setCurrentSceneId('epilogue_screen');
-            }}
+            onViewMemories={handleOpenMemories}
             onRestart={() => {
               setIsShowingCredits(false);
               handleRestart();
@@ -939,17 +983,14 @@ export default function App() {
               language={language}
               onRestart={handleRestart}
               onReturnToTitle={handleReturnToTitle}
-              onOpenMemories={() => {
-                setProloguePhase('none');
-                setIsMemoriesOpen(true);
-              }}
+              onOpenMemories={handleOpenMemories}
               playCount={playCount}
             />
           </div>
         ) : (
           <div className="relative z-20 w-full h-full flex flex-col justify-between max-w-6xl mx-auto pt-3 sm:pt-5">
             {/* Top Stage Header (Chapter Indicator & Persistent Corner Light Meter) */}
-            <header className="px-4 sm:px-6 flex items-center justify-between pointer-events-auto">
+            <header className="px-4 sm:px-6 flex items-center justify-between pointer-events-auto flex-shrink-0">
               <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-950/75 backdrop-blur-md border border-amber-500/30 text-amber-200/90 text-xs font-serif shadow-md">
                 <span className="w-2 h-2 rounded-full bg-amber-400 animate-pulse" />
                 <span>
@@ -1014,16 +1055,18 @@ export default function App() {
 
             {/* Interactive Player Choices */}
             {currentScene.choices && currentScene.choices.length > 0 && prologuePhase === 'none' && (
-              <ChoiceOverlay
-                choices={currentScene.choices}
-                language={language}
-                onSelectChoice={handleSelectChoice}
-              />
+              <div className="flex-shrink-0">
+                <ChoiceOverlay
+                  choices={currentScene.choices}
+                  language={language}
+                  onSelectChoice={handleSelectChoice}
+                />
+              </div>
             )}
 
             {/* Dialogue & Chronicle Panel */}
             {prologuePhase !== 'prologue_card' && prologuePhase !== 'opening_dissolve' && (
-              <div className={`transition-opacity duration-700 ${prologuePhase === 'environment_reveal' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
+              <div className={`transition-opacity duration-700 flex-shrink-0 ${prologuePhase === 'environment_reveal' ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}>
                 <DialogueBox
                   speaker={currentScene.speaker}
                   speakerName={currentScene.speakerName}
@@ -1063,7 +1106,7 @@ export default function App() {
         language={language}
       />
 
-      {/* Memories Scrapbook Gallery Modal */}
+      {/* Memories & Sacred Relics Scrapbook Gallery Modal */}
       <MemoriesGalleryModal
         isOpen={isMemoriesOpen}
         onClose={() => setIsMemoriesOpen(false)}
@@ -1074,6 +1117,7 @@ export default function App() {
             : Object.values(ALL_COLLECTIBLE_LIGHTS)
         }
         playCount={playCount}
+        initialPageIndex={selectedRelicIndex}
         onUnlockAllForDev={() => {
           setPlayCount(7);
           try {
