@@ -449,8 +449,8 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
               {selectedCharacter === 'wendy_pin' && (
                 <p>
                   {language === 'en'
-                    ? '“A gleaming golden brooch inscribed with ‘SWTW’, gifted with fondness and clipped proudly in Wendy’s hair. A shining reminder of all the warmth, kindness, and love she brought to the entire world!” 🌸✨'
-                    : '« Une broche dorée étincelante gravée « SWTW », offerte avec tendresse et portée avec fierté dans la chevelure de Wendy. Un souvenir rayonnant de toute la chaleur et l’amour partagés ! » 🌸✨'}
+                    ? '“A gleaming golden brooch inscribed with ‘SWW’, gifted with fondness and clipped proudly in Wendy’s hair. A shining reminder of all the warmth, kindness, and love she brought to the entire world!” 🌸✨'
+                    : '« Une broche dorée étincelante gravée « SWW », offerte avec tendresse et portée avec fierté dans la chevelure de Wendy. Un souvenir rayonnant de toute la chaleur et l’amour partagés ! » 🌸✨'}
                 </p>
               )}
               {selectedCharacter === 'hypo' && (

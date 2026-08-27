@@ -1021,8 +1021,8 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
                 </p>
                 <p className="text-xs sm:text-sm text-stone-300/90 italic leading-relaxed">
                   {language === 'en'
-                    ? 'Dramatic cosmic entity turned eccentric gentleman with a golden monocle, music note top hat, strawberry cake bearer, and giver of the golden SWTW brooch.'
-                    : 'Seigneur des ombres devenu gentleman mélomane au monocle d’or, porteur de gâteau fraise-chocolat et donateur de la broche dorée SWTW.'}
+                    ? 'Dramatic cosmic entity turned eccentric gentleman with a golden monocle, music note top hat, strawberry cake bearer, and giver of the golden SWW brooch.'
+                    : 'Seigneur des ombres devenu gentleman mélomane au monocle d’or, porteur de gâteau fraise-chocolat et donateur de la broche dorée SWW.'}
                 </p>
               </div>
             </div>

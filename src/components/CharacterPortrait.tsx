@@ -621,7 +621,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
             <circle cx="150" cy="226" r="4.5" fill="url(#brassGrad)" stroke="#78350f" strokeWidth="1" />
             <circle cx="150" cy="226" r="1.5" fill="#fef08a" />
 
-            {/* Optional SWTW Pin on Scarf/Cloak */}
+            {/* Optional SWW Pin on Scarf/Cloak */}
             {showSwwPin && (
               <g transform="translate(162, 230)" className="animate-glint-flash">
                 <circle cx="0" cy="0" r="7.5" fill="#fbbf24" stroke="#d97706" strokeWidth="1.2" />
@@ -1190,7 +1190,7 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
               <circle cx="178" cy="142" r="2" fill="#fda4af" />
             </g>
 
-            {/* 9. THE GOLDEN SWTW HAIRPIN / CELESTIAL PIN (Only when received from Mélo Clown) */}
+            {/* 9. THE GOLDEN SWW HAIRPIN / CELESTIAL PIN (Only when received from Mélo Clown) */}
             {showSwwPin && (
               <g id="wendy-sww-pin" className="animate-glint-flash">
                 {/* Outer Warm Golden Aura */}
@@ -1199,9 +1199,9 @@ export const CharacterPortrait: React.FC<CharacterPortraitProps> = ({
                 {/* Gold Bar Pin with Rich Opacity & Crisp Borders */}
                 <rect x="169" y="131" width="40" height="20" rx="5" fill="url(#goldPinGrad)" stroke="#78350f" strokeWidth="1.6" opacity="1" />
                 <rect x="171" y="133" width="36" height="16" rx="3.5" fill="#fde047" stroke="#b45309" strokeWidth="0.8" opacity="0.95" />
-                {/* Engraved Bold SWTW Lettering */}
-                <text x="189" y="145" fontSize="8" fontWeight="900" fontFamily="serif" fill="#78350f" textAnchor="middle" letterSpacing="0.8">
-                  SWTW
+                {/* Engraved Bold SWW Lettering */}
+                <text x="189" y="145" fontSize="8.5" fontWeight="900" fontFamily="serif" fill="#78350f" textAnchor="middle" letterSpacing="1">
+                  SWW
                 </text>
                 {/* Sparkling Starlight Ornament on Pin Corner */}
                 <polygon points="208,126 210.5,132 216,133.5 211.5,137 213,143 208,139.5 203,143 204.5,137 200,133.5 205.5,132" fill="#ffffff" stroke="#f59e0b" strokeWidth="1" />
