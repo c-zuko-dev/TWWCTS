@@ -1007,6 +1007,7 @@ export default function App() {
                 currentSceneId={currentSceneId}
                 collectedLights={collectedLights.map((l) => l.id)}
                 language={language}
+                onOpenMemories={handleOpenMemories}
               />
             </header>
 

@@ -214,7 +214,7 @@ export const EndingGalleryModal: React.FC<EndingGalleryModalProps> = ({
               className="inline-flex items-center gap-2 px-7 py-3.5 bg-gradient-to-r from-amber-900 via-amber-800 to-stone-900 hover:from-amber-800 hover:to-amber-950 text-amber-100 rounded-2xl font-serif text-sm sm:text-base font-semibold shadow-lg border border-amber-400/50 hover:border-amber-300 transition-all transform hover:-translate-y-0.5 cursor-pointer shadow-[0_0_20px_rgba(251,191,36,0.2)]"
             >
               <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-amber-300" />
-              <span>{language === 'en' ? 'Memories Scrapbook 📖' : 'Album des Souvenirs 📖'}</span>
+              <span>{language === 'en' ? 'Personal Relics Scrapbook 📖' : 'Album des Reliques 📖'}</span>
             </button>
           )}
 

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Sun, Sparkles, X, Heart, Shield, Award } from 'lucide-react';
+import { Sun, Sparkles, X, Heart, Shield, Award, BookOpen } from 'lucide-react';
 import { Language } from '../types';
 import { ALL_COLLECTIBLE_LIGHTS } from '../data/storyData';
 import { audioSynth } from '../utils/audioSynthesizer';
@@ -8,12 +8,14 @@ interface LightMeterProps {
   currentSceneId: string;
   collectedLights: string[];
   language: Language;
+  onOpenMemories?: () => void;
 }
 
 export const LightMeter: React.FC<LightMeterProps> = ({
   currentSceneId,
   collectedLights,
   language,
+  onOpenMemories,
 }) => {
   const [isOpenDetails, setIsOpenDetails] = useState(false);
   const [isGlinting, setIsGlinting] = useState(false);
@@ -286,10 +288,25 @@ export const LightMeter: React.FC<LightMeterProps> = ({
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-5 pt-4 border-t border-amber-500/20 flex items-center justify-center">
+            <div className="mt-5 pt-4 border-t border-amber-500/20 flex flex-wrap items-center justify-center gap-3">
+              {onOpenMemories && (
+                <button
+                  id="btn-light-meter-open-relics"
+                  onClick={() => {
+                    setIsOpenDetails(false);
+                    audioSynth.playSoundEffect('magic_sparkle');
+                    onOpenMemories();
+                  }}
+                  className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-amber-700 via-amber-600 to-amber-700 hover:from-amber-600 hover:to-amber-500 text-amber-100 font-bold text-xs sm:text-sm font-serif shadow-lg cursor-pointer transition-all flex items-center gap-2 border border-amber-400/50"
+                >
+                  <BookOpen className="w-4 h-4 text-amber-300" />
+                  <span>{language === 'en' ? 'Personal Relics Scrapbook 📖' : 'Album des Reliques 📖'}</span>
+                </button>
+              )}
+
               <button
                 onClick={() => setIsOpenDetails(false)}
-                className="px-6 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-amber-200 border border-amber-500/30 font-bold text-xs sm:text-sm font-serif shadow-lg cursor-pointer transition-all"
+                className="px-5 py-2.5 rounded-xl bg-slate-900 hover:bg-slate-850 text-amber-200 border border-amber-500/30 font-bold text-xs sm:text-sm font-serif shadow-lg cursor-pointer transition-all"
               >
                 {language === 'en' ? 'Back to Story' : 'Retour au Conte'}
               </button>

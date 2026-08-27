@@ -332,7 +332,7 @@ export const MemoriesGalleryModal: React.FC<MemoriesGalleryModalProps> = ({
               <div className="flex items-center gap-2">
                 <h2 className="text-base sm:text-lg font-serif font-bold text-amber-100 tracking-wide flex items-center gap-1.5">
                   <BookOpen className="w-4 h-4 text-amber-300" />
-                  <span>{language === 'en' ? 'Memories Scrapbook' : 'Album des Souvenirs'}</span>
+                  <span>{language === 'en' ? 'Personal Relics Scrapbook' : 'Album des Reliques Personnelles'}</span>
                 </h2>
                 <span className="px-2 py-0.5 rounded-full bg-amber-500/20 border border-amber-400/40 text-amber-300 text-[10px] font-mono font-medium hidden xs:inline-flex items-center gap-1">
                   <Sparkles className="w-2.5 h-2.5" />

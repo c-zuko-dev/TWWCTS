@@ -1173,7 +1173,7 @@ export const CreditsRoll: React.FC<CreditsRollProps> = ({
               className="w-full sm:w-auto px-5 py-3 rounded-full bg-gradient-to-r from-amber-950 via-amber-850 to-slate-900 hover:from-amber-900 hover:to-slate-850 text-amber-200 hover:text-white font-serif font-bold text-xs sm:text-sm shadow-lg hover:shadow-amber-500/20 transition-all transform hover:scale-105 cursor-pointer flex items-center justify-center gap-2 border border-amber-400/50"
             >
               <Sparkles className="w-4 h-4 text-amber-300" />
-              <span>{language === 'en' ? 'Memories Scrapbook 📖' : 'Album Souvenirs 📖'}</span>
+              <span>{language === 'en' ? 'Personal Relics Scrapbook 📖' : 'Album des Reliques 📖'}</span>
             </button>
 
             <button

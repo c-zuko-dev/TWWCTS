@@ -465,25 +465,16 @@ export const TitleScreen: React.FC<TitleScreenProps> = ({
                 audioSynth.playSoundEffect('magic_sparkle');
                 onOpenMemories();
               }}
-              className={`w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-4 rounded-2xl font-serif text-sm sm:text-base transition-all border cursor-pointer shadow-md ${
-                playCount >= 7
-                  ? 'bg-amber-950/80 hover:bg-amber-900/90 text-amber-100 border-amber-400/60 shadow-[0_0_15px_rgba(251,191,36,0.2)]'
-                  : 'bg-slate-950/70 hover:bg-slate-900 text-amber-200/90 border-amber-500/30'
-              }`}
+              className="w-full sm:w-auto flex items-center justify-center gap-2 px-5 py-4 bg-gradient-to-r from-amber-950/80 via-amber-900/90 to-amber-950/80 hover:from-amber-900 hover:to-amber-850 text-amber-100 rounded-2xl font-serif text-sm sm:text-base transition-all border border-amber-400/50 hover:border-amber-300 cursor-pointer shadow-md shadow-[0_0_15px_rgba(251,191,36,0.15)]"
               title={
-                playCount >= 7
-                  ? language === 'en'
-                    ? 'Open the Chronicle Memories Scrapbook'
-                    : 'Ouvrir l’Album de Souvenirs de la Chronique'
-                  : language === 'en'
-                  ? `Memories Scrapbook (Unlocked after 7 gameplays • ${playCount}/7)`
-                  : `Album de Souvenirs (Débloqué après 7 voyages • ${playCount}/7)`
+                language === 'en'
+                  ? 'Open the Personal Relics & Memories Scrapbook'
+                  : 'Ouvrir l’Album des Reliques & Souvenirs'
               }
             >
-              <BookOpen className="w-4 h-4 text-amber-400" />
+              <BookOpen className="w-4 h-4 text-amber-300" />
               <span>
-                {language === 'en' ? 'Memories' : 'Souvenirs'}
-                {playCount < 7 ? ` (${playCount}/7)` : ' ✨'}
+                {language === 'en' ? 'Personal Relics Scrapbook 📖' : 'Album des Reliques 📖'}
               </span>
             </button>
           )}
